@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MSA Volunteer Portal
 
-## Getting Started
+A volunteer coordination portal for the Muslim Students' Association at the University of Alberta, built to replace group-chat coordination with a structured sign-up, waitlist, and admin system.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Framework:** [Next.js](https://nextjs.org/)
+- **Hosting:** [Vercel](https://vercel.com/)
+- **Database + Auth:** [Supabase](https://supabase.com/)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Chosen to stay consistent with other MSA Digital Solutions projects (the iftar portal and prayer times display), so patterns and auth logic can be reused across projects.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Live site
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+[msa-volunteer-portal.vercel.app](https://msa-volunteer-portal.vercel.app)
 
-## Learn More
+## Status
 
-To learn more about Next.js, take a look at the following resources:
+🚧 Early development — see [Issues](../../issues) for planned features and progress.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Roadmap
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**V1**
+- Mobile-first UI
+- Event postings
+- One-click sign-up
+- Recurring events
+- Admin dashboard
+- Multi-exec admin access
+- Track prior volunteer involvement
+- Bulk messaging/email
 
-## Deploy on Vercel
+**V2**
+- Volunteer interest tags
+- Volunteer waitlist system
+- Confirmation reminder controls
+- Post-event feedback
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**V3**
+- No-show tracking
