@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import SignUpForm from './components/SignUpForm'
 
 export default async function Home() {
   const { data: events, error } = await supabase
@@ -16,14 +17,15 @@ export default async function Home() {
       {events && events.length > 0 ? (
         <ul className="space-y-4">
           {events.map((event) => (
-            <li key={event.id} className="border rounded-lg p-4">
-              <h2 className="text-lg font-semibold">{event.name}</h2>
-              {event.description && <p className="text-sm text-gray-600">{event.description}</p>}
-              <p className="text-sm mt-2">
-                📍 {event.location || 'TBD'} — {new Date(event.event_date).toLocaleString()}
-              </p>
-              <p className="text-sm">Spots needed: {event.v_capacity}</p>
-            </li>
+        <li key={event.id} className="border rounded-lg p-4">
+          <h2 className="text-lg font-semibold">{event.name}</h2>
+          {event.description && <p className="text-sm text-gray-600">{event.description}</p>}
+          <p className="text-sm mt-2">
+            📍 {event.location || 'TBD'} — {new Date(event.event_date).toLocaleString()}
+          </p>
+          <p className="text-sm">Spots needed: {event.v_capacity}</p>
+          <SignUpForm eventId={event.id} />
+        </li>
           ))}
         </ul>
       ) : (
