@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import MarkAttendanceButton from '../components/MarkAttendanceButton'
+import BulkMessageForm from '../components/BulkMessageForm'
 import Link from 'next/link'
 
 export default async function AdminDashboard() {
@@ -39,6 +40,9 @@ export default async function AdminDashboard() {
               ) : (
                 <p className="text-sm text-gray-400">No sign-ups yet.</p>
               )}
+              <BulkMessageForm
+                emails={event.signups?.map((s: any) => s.volunteers?.email).filter(Boolean) || []}
+              />
             </li>
           ))}
         </ul>
