@@ -1,39 +1,86 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
+import { DayPicker } from 'react-day-picker'
+import { addDays, addWeeks, addMonths, addYears, format } from 'date-fns'
+import 'react-day-picker/dist/style.css'
+
+type RecurrenceType = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'annually' | 'custom'
+
+const PRESET_LOCATIONS = [
+  'Hub Prayer Room',
+  "SUB (Students' Union Building)",
+  'CAB (Central Academic Building)',
+  'Myer Horowitz Theatre',
+  'Quad',
+  'Other (custom)',
+]
 
 export default function CreateEvent() {
   const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [location, setLocation] = useState('')
-  const [eventDate, setEventDate] = useState('')
+  const [task, setTask] = useState('')
+  const [whatToBring, setWhatToBring] = useState('')
+  const [notes, setNotes] = useState('')
+  const [locationChoice, setLocationChoice] = useState('')
+  const [customLocation, setCustomLocation] = useState('')
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
+  const [time, setTime] = useState('14:00')
   const [capacity, setCapacity] = useState(5)
-  const [isRecurring, setIsRecurring] = useState(false)
+  const [recurrence, setRecurrence] = useState<RecurrenceType>('none')
   const [occurrences, setOccurrences] = useState(4)
+  const [customInterval, setCustomInterval] = useState(3)
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
   const supabase = createClient()
   const router = useRouter()
 
+  const location = locationChoice === 'Other (custom)' ? customLocation : locationChoice
+
+  const description = [
+    task,
+    whatToBring ? `What to bring: ${whatToBring}.` : '',
+    notes,
+  ].filter(Boolean).join(' ')
+
+  const generatedDates = useMemo(() => {
+    if (!startDate) return []
+    if (recurrence === 'none') return [startDate]
+
+    const dates: Date[] = []
+    for (let i = 0; i < occurrences; i++) {
+      let d = startDate
+      switch (recurrence) {
+        case 'daily': d = addDays(startDate, i); break
+        case 'weekly': d = addWeeks(startDate, i); break
+        case 'biweekly': d = addWeeks(startDate, i * 2); break
+        case 'monthly': d = addMonths(startDate, i); break
+        case 'annually': d = addYears(startDate, i); break
+        case 'custom': d = addDays(startDate, i * customInterval); break
+      }
+      dates.push(d)
+    }
+    return dates
+  }, [startDate, recurrence, occurrences, customInterval])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!startDate) return
     setStatus('submitting')
 
-    const baseDate = new Date(eventDate)
-    const seriesId = isRecurring ? crypto.randomUUID() : null
-    const count = isRecurring ? occurrences : 1
+    const seriesId = recurrence !== 'none' ? crypto.randomUUID() : null
+    const [hours, minutes] = time.split(':').map(Number)
 
-    const rows = Array.from({ length: count }).map((_, i) => {
-      const date = new Date(baseDate)
-      date.setDate(date.getDate() + i * 7)
+    const rows = generatedDates.map((d) => {
+      const eventDateTime = new Date(d)
+      eventDateTime.setHours(hours, minutes)
       return {
         name,
         description,
         location,
-        event_date: date.toISOString(),
+        event_date: eventDateTime.toISOString(),
         v_capacity: capacity,
-        is_recurring: isRecurring,
+        is_recurring: recurrence !== 'none',
         series_id: seriesId,
       }
     })
@@ -50,31 +97,159 @@ export default function CreateEvent() {
   }
 
   return (
-    <main className="p-8 max-w-md mx-auto">
+    <main className="p-8 max-w-2xl mx-auto">
       <h1 className="text-xl font-bold mb-4">Create Event</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <input placeholder="Event name" value={name} onChange={(e) => setName(e.target.value)} required className="border rounded px-2 py-1" />
-        <textarea placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} className="border rounded px-2 py-1" />
-        <input placeholder="Location" value={location} onChange={(e) => setLocation(e.target.value)} className="border rounded px-2 py-1" />
-        <input type="datetime-local" value={eventDate} onChange={(e) => setEventDate(e.target.value)} required className="border rounded px-2 py-1" />
-        <input type="number" placeholder="Volunteers needed" value={capacity} onChange={(e) => setCapacity(Number(e.target.value))} required className="border rounded px-2 py-1" />
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <input
+          placeholder="Event name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          className="border rounded px-2 py-1"
+        />
 
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
-          Repeat weekly
-        </label>
+        <div className="flex flex-col gap-2">
+          <label className="text-sm block">Description</label>
+          <div>
+            <label className="text-xs text-gray-600 block">What will volunteers be doing?</label>
+            <textarea
+              placeholder="e.g. Help set up chairs and prayer mats before Jummah"
+              value={task}
+              onChange={(e) => setTask(e.target.value)}
+              required
+              className="border rounded px-2 py-1 w-full text-sm"
+              rows={2}
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-600 block">What should they bring? (optional)</label>
+            <input
+              placeholder="e.g. comfortable clothing"
+              value={whatToBring}
+              onChange={(e) => setWhatToBring(e.target.value)}
+              className="border rounded px-2 py-1 w-full text-sm"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-600 block">Anything else volunteers should know? (optional)</label>
+            <textarea
+              placeholder="e.g. Please arrive 15 minutes early"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="border rounded px-2 py-1 w-full text-sm"
+              rows={2}
+            />
+          </div>
+          {description && <p className="text-sm text-gray-500 italic">Preview: {description}</p>}
+        </div>
 
-        {isRecurring && (
-          <input
-            type="number"
-            placeholder="Number of weeks"
-            value={occurrences}
-            onChange={(e) => setOccurrences(Number(e.target.value))}
-            className="border rounded px-2 py-1"
+        <div>
+          <label className="text-sm block mb-1">Location</label>
+          <select
+            value={locationChoice}
+            onChange={(e) => setLocationChoice(e.target.value)}
+            required
+            className="border rounded px-2 py-1 w-full"
+          >
+            <option value="" disabled>Select a location</option>
+            {PRESET_LOCATIONS.map((loc) => (
+              <option key={loc} value={loc}>{loc}</option>
+            ))}
+          </select>
+          {locationChoice === 'Other (custom)' && (
+            <input
+              placeholder="Enter custom location"
+              value={customLocation}
+              onChange={(e) => setCustomLocation(e.target.value)}
+              required
+              className="border rounded px-2 py-1 w-full mt-2"
+            />
+          )}
+        </div>
+
+        <div>
+          <label className="text-sm block mb-1">Start date</label>
+          <DayPicker
+            mode="single"
+            selected={startDate}
+            onSelect={setStartDate}
+            modifiers={{ recurring: generatedDates }}
+            modifiersStyles={{
+              recurring: { backgroundColor: '#1F7A5C', color: 'white' },
+            }}
           />
+        </div>
+
+        <input
+          type="time"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+          required
+          className="border rounded px-2 py-1"
+        />
+        <input
+          type="number"
+          placeholder="Volunteers needed"
+          value={capacity}
+          onChange={(e) => setCapacity(Number(e.target.value))}
+          required
+          className="border rounded px-2 py-1"
+        />
+
+        <div>
+          <label className="text-sm block mb-1">Repeats</label>
+          <select
+            value={recurrence}
+            onChange={(e) => setRecurrence(e.target.value as RecurrenceType)}
+            className="border rounded px-2 py-1 w-full"
+          >
+            <option value="none">Doesn't repeat</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="biweekly">Biweekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="annually">Annually</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+
+        {recurrence === 'custom' && (
+          <div className="flex items-center gap-2 text-sm">
+            Every
+            <input
+              type="number"
+              value={customInterval}
+              onChange={(e) => setCustomInterval(Number(e.target.value))}
+              className="border rounded px-2 py-1 w-16"
+            />
+            days
+          </div>
         )}
 
-        <button type="submit" disabled={status === 'submitting'} className="bg-black text-white rounded px-3 py-1">
+        {recurrence !== 'none' && (
+          <div>
+            <label className="text-sm block mb-1">Number of occurrences</label>
+            <input
+              type="number"
+              value={occurrences}
+              onChange={(e) => setOccurrences(Number(e.target.value))}
+              className="border rounded px-2 py-1"
+            />
+          </div>
+        )}
+
+        {generatedDates.length > 0 && (
+          <p className="text-sm text-gray-600">
+            This will create {generatedDates.length} event{generatedDates.length > 1 ? 's' : ''} on:{' '}
+            {generatedDates.map((d) => format(d, 'MMM d')).join(', ')}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={status === 'submitting' || !startDate}
+          className="bg-black text-white rounded px-3 py-1"
+        >
           {status === 'submitting' ? 'Creating...' : 'Create Event'}
         </button>
         {status === 'error' && <p className="text-red-500 text-sm">Something went wrong — try again.</p>}
