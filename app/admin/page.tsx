@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import MarkAttendanceButton from '../components/MarkAttendanceButton'
+import Link from 'next/link'
 
 export default async function AdminDashboard() {
   const { data: events, error: eventsError } = await supabase
@@ -14,6 +15,7 @@ export default async function AdminDashboard() {
   return (
     <main className="p-8 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
+      <Link href="/admin/volunteers" className="text-sm underline mb-4 inline-block">View Volunteer History →</Link>
       {events && events.length > 0 ? (
         <ul className="space-y-6">
           {events.map((event) => (

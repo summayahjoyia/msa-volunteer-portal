@@ -7,9 +7,17 @@ export default function SignUpForm({ eventId }: { eventId: number }) {
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    if (!email.toLowerCase().endsWith('@ualberta.ca')) {
+      setStatus('error')
+      setErrorMessage('Please use your @ualberta.ca email.')
+      return
+    }
+
     setStatus('submitting')
 
     let { data: volunteer } = await supabase
@@ -26,6 +34,7 @@ export default function SignUpForm({ eventId }: { eventId: number }) {
         .single()
       if (insertError) {
         setStatus('error')
+        setErrorMessage('Something went wrong creating your profile — try again.')
         return
       }
       volunteer = newVolunteer
@@ -35,7 +44,13 @@ export default function SignUpForm({ eventId }: { eventId: number }) {
       .from('signups')
       .insert({ event_id: eventId, volunteer_id: volunteer.id, status: 'confirmed' })
 
-    setStatus(signupError ? 'error' : 'success')
+    if (signupError) {
+      setStatus('error')
+      setErrorMessage('Something went wrong signing you up — try again.')
+      return
+    }
+
+    setStatus('success')
   }
 
   if (status === 'success') return <p className="text-green-600 text-sm mt-2">You're signed up!</p>
@@ -52,7 +67,7 @@ export default function SignUpForm({ eventId }: { eventId: number }) {
       />
       <input
         type="email"
-        placeholder="Your email"
+        placeholder="you@ualberta.ca"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
@@ -65,7 +80,7 @@ export default function SignUpForm({ eventId }: { eventId: number }) {
       >
         {status === 'submitting' ? '...' : 'Sign Up'}
       </button>
-      {status === 'error' && <p className="text-red-500 text-sm w-full">Something went wrong — try again.</p>}
+      {status === 'error' && <p className="text-red-500 text-sm w-full">{errorMessage}</p>}
     </form>
   )
 }
