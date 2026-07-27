@@ -3,7 +3,17 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
-export default function SignUpForm({ eventId }: { eventId: number }) {
+export default function SignUpForm({
+  eventId,
+  eventName,
+  eventDate,
+  location,
+}: {
+  eventId: number
+  eventName: string
+  eventDate: string
+  location: string
+}) {
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
@@ -50,10 +60,16 @@ export default function SignUpForm({ eventId }: { eventId: number }) {
       return
     }
 
+    await fetch('/api/send-confirmation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name, eventName, eventDate, location }),
+    })
+
     setStatus('success')
   }
 
-  if (status === 'success') return <p className="text-green-600 text-sm mt-2">You're signed up!</p>
+  if (status === 'success') return <p className="text-green-600 text-sm mt-2">You're signed up! Check your email for confirmation.</p>
 
   return (
     <form onSubmit={handleSubmit} className="mt-3 flex gap-2 flex-wrap">

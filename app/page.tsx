@@ -24,7 +24,12 @@ export default async function Home() {
             📍 {event.location || 'TBD'} — {new Date(event.event_date).toLocaleString()}
           </p>
           <p className="text-sm">Spots needed: {event.v_capacity}</p>
-          <SignUpForm eventId={event.id} />
+          <SignUpForm 
+            eventId={event.id}
+            eventName={event.name}
+            eventDate={event.event_date}
+            location={event.location}
+          />
         </li>
           ))}
         </ul>
