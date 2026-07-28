@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Mail } from 'lucide-react'
 
 export default function BulkMessageForm({ emails }: { emails: string[] }) {
   const [open, setOpen] = useState(false)
@@ -23,16 +24,20 @@ export default function BulkMessageForm({ emails }: { emails: string[] }) {
 
   if (!open) {
     return (
-      <button onClick={() => setOpen(true)} className="text-sm underline text-blue-600 mt-2">
+      <button
+        onClick={() => setOpen(true)}
+        className="mt-3 w-full border border-msa-green text-msa-green text-sm font-medium py-1.5 rounded-lg hover:bg-msa-green hover:text-white transition flex items-center justify-center gap-2"
+      >
+        <Mail size={15} />
         Message all sign-ups
       </button>
     )
   }
 
-  if (status === 'sent') return <p className="text-sm text-green-600 mt-2">Message sent!</p>
+  if (status === 'sent') return <p className="text-sm text-msa-green mt-2">Message sent!</p>
 
   return (
-    <form onSubmit={handleSend} className="mt-2 flex flex-col gap-2 border-t pt-2">
+    <form onSubmit={handleSend} className="mt-3 flex flex-col gap-2 border-t border-gray-100 pt-3">
       <input
         placeholder="Subject"
         value={subject}
@@ -49,7 +54,11 @@ export default function BulkMessageForm({ emails }: { emails: string[] }) {
         rows={3}
       />
       <div className="flex gap-2">
-        <button type="submit" disabled={status === 'sending'} className="bg-black text-white rounded px-3 py-1 text-sm">
+        <button
+          type="submit"
+          disabled={status === 'sending'}
+          className="bg-msa-green text-white rounded-lg px-3 py-1.5 text-sm hover:bg-msa-green-dark transition"
+        >
           {status === 'sending' ? 'Sending...' : 'Send'}
         </button>
         <button type="button" onClick={() => setOpen(false)} className="text-sm text-gray-500">

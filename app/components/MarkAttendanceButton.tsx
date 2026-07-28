@@ -4,33 +4,44 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
+const STATUS_OPTIONS = [
+  { value: 'confirmed', label: 'Confirmed', color: 'text-gray-500' },
+  { value: 'attended', label: 'Attended', color: 'text-msa-green' },
+  { value: 'absent', label: 'Absent', color: 'text-red-600' },
+]
+
 export default function MarkAttendanceButton({ signupId, currentStatus }: { signupId: number; currentStatus: string }) {
   const [loading, setLoading] = useState(false)
+  const [status, setStatus] = useState(currentStatus)
   const router = useRouter()
 
-  async function markAttended() {
+  async function updateStatus(newStatus: string) {
     setLoading(true)
     const { error } = await supabase
       .from('signups')
-      .update({ status: 'attended' })
+      .update({ status: newStatus })
       .eq('id', signupId)
     setLoading(false)
     if (!error) {
+      setStatus(newStatus)
       router.refresh()
     }
   }
 
-  if (currentStatus === 'attended') {
-    return <span className="text-green-600 text-sm">✓ Attended</span>
-  }
-
   return (
-    <button
-      onClick={markAttended}
+    <select
+      value={status}
       disabled={loading}
-      className="text-sm bg-black text-white px-2 py-0.5 rounded"
+      onChange={(e) => updateStatus(e.target.value)}
+      className={`text-xs border rounded-md px-2 py-1 bg-white ${
+        STATUS_OPTIONS.find((o) => o.value === status)?.color || 'text-gray-500'
+      }`}
     >
-      {loading ? '...' : 'Mark Attended'}
-    </button>
+      {STATUS_OPTIONS.map((opt) => (
+        <option key={opt.value} value={opt.value} className="text-gray-900">
+          {opt.label}
+        </option>
+      ))}
+    </select>
   )
 }

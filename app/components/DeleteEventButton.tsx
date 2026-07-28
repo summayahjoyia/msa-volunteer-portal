@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
+import { Trash2 } from 'lucide-react'
 
 export default function DeleteEventButton({ eventId, seriesId }: { eventId: number; seriesId: string | null }) {
   const [loading, setLoading] = useState(false)
@@ -28,10 +29,7 @@ export default function DeleteEventButton({ eventId, seriesId }: { eventId: numb
         }
       }
 
-      // Delete signups first to avoid foreign key conflict
       await supabase.from('signups').delete().eq('event_id', id)
-
-      // Then delete the event itself
       await supabase.from('events').delete().eq('id', id)
     }
   }
@@ -67,9 +65,10 @@ export default function DeleteEventButton({ eventId, seriesId }: { eventId: numb
     <button
       onClick={confirmDelete}
       disabled={loading}
-      className="text-sm text-red-600 underline"
+      className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-600/10 transition disabled:opacity-50"
+      aria-label="Delete event"
     >
-      {loading ? 'Deleting...' : 'Delete'}
+      <Trash2 size={16} />
     </button>
   )
 }
