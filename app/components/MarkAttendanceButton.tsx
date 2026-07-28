@@ -5,7 +5,6 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
 const STATUS_OPTIONS = [
-  { value: 'confirmed', label: 'Confirmed', color: 'text-gray-500' },
   { value: 'attended', label: 'Attended', color: 'text-msa-green' },
   { value: 'absent', label: 'Absent', color: 'text-red-600' },
 ]
