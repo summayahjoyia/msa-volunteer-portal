@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Plus } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { Plus, LogOut } from 'lucide-react'
+import { createClient } from '@/lib/supabase-browser'
 
 export default function AdminTabs({
   exportSlot,
@@ -10,8 +11,15 @@ export default function AdminTabs({
   exportSlot?: React.ReactNode
 }) {
   const pathname = usePathname()
+  const router = useRouter()
+  const supabase = createClient()
   const isVolunteers = pathname === '/admin/volunteers'
   const isEvents = pathname === '/admin'
+
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-8 pt-6">
@@ -48,6 +56,13 @@ export default function AdminTabs({
               Create event
             </Link>
           )}
+          <button
+            onClick={handleSignOut}
+            className="text-sm text-gray-400 hover:text-red-600 transition flex items-center gap-1.5 pb-2.5"
+          >
+            <LogOut size={15} />
+            Sign out
+          </button>
         </div>
       </div>
     </div>
