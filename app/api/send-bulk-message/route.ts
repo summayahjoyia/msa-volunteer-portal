@@ -8,7 +8,7 @@ export async function POST(request: Request) {
 
   try {
     await resend.emails.send({
-      from: 'MSA Volunteer Portal <onboarding@resend.dev>',
+      from: 'MSA Volunteer Portal <noreply@msauofa.ca>',
       to: emails,
       subject,
       html: `<p>${message.replace(/\n/g, '<br/>')}</p>`,

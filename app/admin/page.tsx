@@ -63,7 +63,10 @@ export default async function AdminDashboard() {
           <ul className="text-sm space-y-1 mt-2">
             {event.signups.map((s: any) => (
               <li key={s.id} className="flex justify-between items-center border-t border-gray-100 pt-1">
-                <span>{s.volunteers?.name} ({s.volunteers?.email})</span>
+                <div>
+                  <div className="text-gray-900">{s.volunteers?.name}</div>
+                  <div className="text-xs text-gray-400">{s.volunteers?.email}</div>
+                </div>
                 <MarkAttendanceButton signupId={s.id} currentStatus={s.status} />
               </li>
             ))}

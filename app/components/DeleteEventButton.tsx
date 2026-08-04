@@ -19,8 +19,9 @@ export default function DeleteEventButton({ eventId, seriesId }: { eventId: numb
         .single()
 
       if (event) {
+        const isPastEvent = new Date(event.event_date) < new Date()
         const emails = event.signups?.map((s: any) => s.volunteers?.email).filter(Boolean) || []
-        if (emails.length > 0) {
+        if (emails.length > 0 && !isPastEvent) {
           await fetch('/api/send-cancellation', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

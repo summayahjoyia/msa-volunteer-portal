@@ -33,6 +33,7 @@ export default function CreateEvent() {
   const [occurrences, setOccurrences] = useState(4)
   const [customInterval, setCustomInterval] = useState(3)
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState('')
   const supabase = createClient()
   const router = useRouter()
 
@@ -43,6 +44,9 @@ export default function CreateEvent() {
     whatToBring ? `What to bring: ${whatToBring}.` : '',
     notes,
   ].filter(Boolean).join(' ')
+
+  const isToday = startDate ? startDate.toDateString() === new Date().toDateString() : false
+  const minTime = isToday ? new Date().toTimeString().slice(0, 5) : undefined
 
   const generatedDates = useMemo(() => {
     if (!startDate) return []
@@ -67,10 +71,21 @@ export default function CreateEvent() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!startDate) return
+
+    const [hours, minutes] = time.split(':').map(Number)
+    const firstEventDateTime = new Date(startDate)
+    firstEventDateTime.setHours(hours, minutes)
+
+    if (firstEventDateTime < new Date()) {
+      setStatus('error')
+      setErrorMessage("That time has already passed today — please pick a time later than now.")
+      return
+    }
+
     setStatus('submitting')
+    setErrorMessage('')
 
     const seriesId = recurrence !== 'none' ? crypto.randomUUID() : null
-    const [hours, minutes] = time.split(':').map(Number)
 
     const rows = generatedDates.map((d) => {
       const eventDateTime = new Date(d)
@@ -90,6 +105,7 @@ export default function CreateEvent() {
 
     if (error) {
       setStatus('error')
+      setErrorMessage('Something went wrong — try again.')
       return
     }
 
@@ -198,6 +214,7 @@ export default function CreateEvent() {
             type="time"
             value={time}
             onChange={(e) => setTime(e.target.value)}
+            min={minTime}
             required
             className="border rounded px-2 py-1"
           />
@@ -266,7 +283,7 @@ export default function CreateEvent() {
           >
             {status === 'submitting' ? 'Creating...' : 'Create Event'}
           </button>
-          {status === 'error' && <p className="text-red-500 text-sm">Something went wrong — try again.</p>}
+          {status === 'error' && <p className="text-red-500 text-sm">{errorMessage}</p>}
         </form>
       </main>
     </>
