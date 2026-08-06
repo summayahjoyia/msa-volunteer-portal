@@ -1,6 +1,9 @@
 import { supabase } from '@/lib/supabase'
 import UserStatusBar from './components/UserStatusBar'
 import EventSignUpButton from './components/EventSignUpButton'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 
 export default async function Home() {
   const { data: events, error } = await supabase
