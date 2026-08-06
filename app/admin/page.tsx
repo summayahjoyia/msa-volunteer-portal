@@ -6,6 +6,7 @@ import ExportButton from '../components/ExportButton'
 import AdminTabs from '../components/AdminTabs'
 import Link from 'next/link'
 import { Pencil } from 'lucide-react'
+export const dynamic = 'force-dynamic'
 
 export default async function AdminDashboard() {
   const { data: events, error: eventsError } = await supabase
