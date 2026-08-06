@@ -22,7 +22,7 @@ export default function AdminTabs({
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-8 pt-6">
+    <div className="max-w-3xl mx-auto px-4 sm:px-8 pt-6 min-w-0">
       <div className="flex items-center gap-5 sm:gap-6 border-b border-msa-green-dark/15 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <Link
           href="/admin"
