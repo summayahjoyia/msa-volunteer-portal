@@ -37,3 +37,6 @@ body {
 .rdp-chevron {
   fill: var(--msa-green) !important;
 }
+html, body {
+  overflow-x: hidden;
+}
