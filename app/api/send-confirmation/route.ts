@@ -16,7 +16,6 @@ export async function POST(request: Request) {
         <p>You're confirmed for <strong>${eventName}</strong>.</p>
         <p>📅 ${new Date(eventDate).toLocaleString()}<br/>📍 ${location || 'TBD'}</p>
         <p style="color: #D4A537; font-style: italic;">JazakAllah Khair — may Allah reward you for stepping up to serve your community.</p>
-        <p>If this wasn't you, please let an MSA exec know right away.</p>
       `,
     })
     return NextResponse.json({ success: true })
