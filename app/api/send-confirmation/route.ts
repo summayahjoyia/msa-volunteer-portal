@@ -12,7 +12,7 @@ export async function POST(request: Request) {
       to: email,
       subject: `You're signed up: ${eventName}`,
       html: `
-        <p>Hi ${name},</p>
+        <p>Assalam Alaikum ${name},</p>
         <p>You're confirmed for <strong>${eventName}</strong>.</p>
         <p>📅 ${new Date(eventDate).toLocaleString()}<br/>📍 ${location || 'TBD'}</p>
         <p style="color: #D4A537; font-style: italic;">JazakAllah Khair — may Allah reward you for stepping up to serve your community.</p>

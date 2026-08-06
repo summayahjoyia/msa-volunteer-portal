@@ -12,7 +12,7 @@ export async function POST(request: Request) {
       to: emails,
       subject: `Updated: ${eventName}`,
       html: `
-        <p>Assalamu alaikum,</p>
+        <p>Assalam Alaikum,</p>
         <p><strong>${eventName}</strong> has been updated. Here are the current details:</p>
         <p>📅 ${new Date(eventDate).toLocaleString()}<br/>📍 ${location || 'TBD'}</p>
         <p>${description}</p>

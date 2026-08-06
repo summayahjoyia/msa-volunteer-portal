@@ -11,7 +11,7 @@ import AdminNav from '../../components/AdminNav'
 type RecurrenceType = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'annually' | 'custom'
 
 const PRESET_LOCATIONS = [
-  'Hub Prayer Room',
+  'HUB Prayer Room',
   "SUB (Students' Union Building)",
   'CAB (Central Academic Building)',
   'Myer Horowitz Theatre',
