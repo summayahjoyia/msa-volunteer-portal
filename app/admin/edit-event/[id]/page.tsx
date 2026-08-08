@@ -11,22 +11,49 @@ export default function EditEvent() {
   const router = useRouter()
 
   const [loading, setLoading] = useState(true)
+  const [locked, setLocked] = useState(false)
+
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
   const [eventDate, setEventDate] = useState('')
   const [capacity, setCapacity] = useState(5)
+
+  const [original, setOriginal] = useState({
+    name: '',
+    description: '',
+    location: '',
+    eventDate: '',
+    capacity: 5,
+  })
+
   const [status, setStatus] = useState<'idle' | 'submitting' | 'error'>('idle')
 
   useEffect(() => {
     async function fetchEvent() {
       const { data } = await supabase.from('events').select('*').eq('id', eventId).single()
       if (data) {
-        setName(data.name)
-        setDescription(data.description || '')
-        setLocation(data.location || '')
-        setEventDate(data.event_date?.slice(0, 16) || '')
-        setCapacity(data.v_capacity)
+        const cutoff = new Date(data.event_date)
+        cutoff.setHours(cutoff.getHours() + 24)
+        if (new Date() >= cutoff) {
+          setLocked(true)
+          setLoading(false)
+          return
+        }
+
+        const initial = {
+          name: data.name,
+          description: data.description || '',
+          location: data.location || '',
+          eventDate: data.event_date?.slice(0, 16) || '',
+          capacity: data.v_capacity,
+        }
+        setName(initial.name)
+        setDescription(initial.description)
+        setLocation(initial.location)
+        setEventDate(initial.eventDate)
+        setCapacity(initial.capacity)
+        setOriginal(initial)
       }
       setLoading(false)
     }
@@ -60,7 +87,14 @@ export default function EditEvent() {
 
     const emails = signupsData?.map((s: any) => s.volunteers?.email).filter(Boolean) || []
 
-    if (emails.length > 0) {
+    const changedFields: string[] = []
+    if (location !== original.location) changedFields.push('location')
+    if (eventDate !== original.eventDate) changedFields.push('date')
+    if (description !== original.description) changedFields.push('description')
+    if (name !== original.name) changedFields.push('name')
+    if (capacity !== original.capacity) changedFields.push('capacity')
+
+    if (emails.length > 0 && changedFields.length > 0) {
       await fetch('/api/send-update-notice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -70,6 +104,7 @@ export default function EditEvent() {
           eventDate: new Date(eventDate).toISOString(),
           location,
           description,
+          changedFields,
         }),
       })
     }
@@ -78,6 +113,16 @@ export default function EditEvent() {
   }
 
   if (loading) return <p className="p-8">Loading...</p>
+
+  if (locked) {
+    return (
+      <main className="p-8 max-w-md mx-auto text-center">
+        <p className="text-gray-500">
+          This event has already happened and can no longer be edited.
+        </p>
+      </main>
+    )
+  }
 
   return (
     <main className="p-8 max-w-md mx-auto">
