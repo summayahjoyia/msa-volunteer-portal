@@ -51,7 +51,7 @@ export default async function Home() {
                 </div>
 
                 <p className="text-sm text-msa-green mt-1">
-                  Volunteers needed: {signedUpCount} of {event.v_capacity}
+                  Spots open: {signedUpCount} of {event.v_capacity}
                 </p>
 
                 <EventSignUpButton
