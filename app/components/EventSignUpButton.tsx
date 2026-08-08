@@ -111,26 +111,26 @@ export default function EventSignUpButton({
 
   if (!volunteer) {
     return (
-      <p className="mt-3 text-sm text-gray-500">Sign in with Google to sign up.</p>
+      <p className="mt-3 text-sm text-gray-500">Sign in with Google above to sign up.</p>
     )
   }
 
   if (status === 'signed_up' || status === 'already') {
     return (
       <div className="mt-2 text-sm">
-        <p className="text-msa-green font-medium">
+        <p className="text-msa-green-dark dark:text-msa-cream font-medium">
           {status === 'already' ? "You're signed up for this event." : "You're signed up! Check your email for confirmation."}
         </p>
         {status === 'signed_up' && (
-          <p className="text-msa-gold italic mt-1">
+          <p className="text-msa-gold italic mt-1.5 text-[13px]">
             JazakAllah Khair — may Allah reward you for stepping up to serve your community.
           </p>
         )}
         <button
           onClick={handleCancel}
-          className="mt-2 text-xs text-red-400 hover:text-red-600 underline underline-offset-4 transition"
+          className="mt-3 border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 text-xs px-3 py-1.5 rounded-lg hover:border-red-300 hover:text-red-500 transition"
         >
-          I can't make it.
+          Can't make it
         </button>
       </div>
     )
@@ -139,7 +139,7 @@ export default function EventSignUpButton({
   if (status === 'cancelled') {
     return (
       <div className="mt-2 text-sm">
-        <p className="text-gray-500">You've cancelled your spot for this event.</p>
+        <p className="text-gray-500 dark:text-gray-400">You've cancelled your spot for this event.</p>
         <button
           onClick={handleSignUp}
           className="mt-2 bg-msa-green text-white rounded-lg px-3 py-1.5 text-sm hover:bg-msa-green-dark transition"
