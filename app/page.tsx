@@ -53,7 +53,7 @@ export default async function Home() {
                 </div>
 
                 <p className="text-sm text-msa-green mt-1">
-                  Spots open: {signedUpCount} of {event.v_capacity}
+                  Spots open: {Math.max(event.v_capacity - signedUpCount, 0)} of {event.v_capacity}
                 </p>
 
                 <EventSignUpButton
