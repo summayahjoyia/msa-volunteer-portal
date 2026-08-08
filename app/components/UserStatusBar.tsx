@@ -42,7 +42,9 @@ export default function UserStatusBar() {
     <div className="max-w-2xl mx-auto mb-6 flex items-center justify-between gap-4 text-sm bg-white rounded-lg px-5 py-3 shadow-sm">
       <span className="text-gray-600">
         Signed in as{' '}
-        <span className="text-msa-green-dark font-medium">{user.name || user.email}</span>
+        <span className="font-semibold" style={{ color: '#0B3D2E' }}>
+          {user.name || user.email}
+        </span>
       </span>
       <button
         onClick={handleSignOut}
