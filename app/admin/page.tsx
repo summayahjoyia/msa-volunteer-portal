@@ -1,12 +1,8 @@
 import { supabase } from '@/lib/supabase'
-import MarkAttendanceButton from '../components/MarkAttendanceButton'
-import BulkMessageForm from '../components/BulkMessageForm'
-import DeleteEventButton from '../components/DeleteEventButton'
 import ExportButton from '../components/ExportButton'
 import AdminTabs from '../components/AdminTabs'
 import ThemeToggle from '../components/ThemeToggle'
-import Link from 'next/link'
-import { Pencil } from 'lucide-react'
+import EventsList from '../components/EventsList'
 export const dynamic = 'force-dynamic'
 
 export default async function AdminDashboard() {
@@ -33,56 +29,6 @@ export default async function AdminDashboard() {
     }))
   ) || []
 
-  const now = new Date()
-  const upcomingEvents = events?.filter((e) => new Date(e.event_date) >= now) || []
-  const pastEvents = (events?.filter((e) => new Date(e.event_date) < now) || []).sort(
-    (a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime()
-  )
-
-  function renderEventCard(event: any) {
-    return (
-      <li key={event.id} className="bg-white dark:bg-[#2A2A2D] rounded-xl p-5 shadow-sm border-t-4 border-msa-gold transition-colors">
-        <div className="flex justify-between items-start gap-3">
-          <h2 className="text-lg font-semibold text-msa-green-dark dark:text-msa-cream">{event.name}</h2>
-          <div className="flex gap-1 items-center shrink-0">
-            <Link
-              href={`/admin/edit-event/${event.id}`}
-              className="p-1.5 text-gray-400 hover:text-msa-green rounded-md hover:bg-msa-green/10 transition"
-              aria-label="Edit event"
-            >
-              <Pencil size={16} />
-            </Link>
-            <DeleteEventButton eventId={event.id} seriesId={event.series_id} />
-          </div>
-        </div>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-          {event.location}, {new Date(event.event_date).toLocaleString()}
-        </p>
-        <p className="text-sm mb-2 text-msa-green dark:text-[#3B9A72]">
-          Sign-ups: {event.signups?.length || 0} / {event.v_capacity}
-        </p>
-        {event.signups && event.signups.length > 0 ? (
-          <ul className="text-sm space-y-1 mt-2">
-            {event.signups.map((s: any) => (
-              <li key={s.id} className="flex justify-between items-center border-t border-gray-100 dark:border-gray-700 pt-1">
-                <div>
-                  <div className="text-gray-900 dark:text-gray-100">{s.volunteers?.name}</div>
-                  <div className="text-xs text-gray-400">{s.volunteers?.email}</div>
-                </div>
-                <MarkAttendanceButton signupId={s.id} currentStatus={s.status} />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-gray-400">No sign-ups yet.</p>
-        )}
-        <BulkMessageForm
-          emails={event.signups?.map((s: any) => s.volunteers?.email).filter(Boolean) || []}
-        />
-      </li>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-background transition-colors relative">
       <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
@@ -101,22 +47,7 @@ export default async function AdminDashboard() {
       />
 
       <main className="p-8 max-w-3xl mx-auto">
-        <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Upcoming</h2>
-        {upcomingEvents.length > 0 ? (
-          <ul className="space-y-6">{upcomingEvents.map(renderEventCard)}</ul>
-        ) : (
-          <p className="text-gray-500 dark:text-gray-400 mb-6">No upcoming events.</p>
-        )}
-
-        {pastEvents.length > 0 && (
-          <details className="mt-10 group">
-            <summary className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide cursor-pointer select-none list-none flex items-center gap-1">
-              <span className="transition-transform group-open:rotate-90">▸</span>
-              Past events ({pastEvents.length})
-            </summary>
-            <ul className="space-y-6 mt-4">{pastEvents.map(renderEventCard)}</ul>
-          </details>
-        )}
+        <EventsList events={events || []} />
       </main>
     </div>
   )
