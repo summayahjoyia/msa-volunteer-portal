@@ -52,7 +52,7 @@ export default async function Home() {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{event.description}</p>
                 )}
 
-                <div className="mt-3 space-y-1 text-sm text-msa-green dark:text-[#3B9A72]">
+                <div className="mt-3 space-y-1 text-sm text-gray-500 dark:text-gray-400">
                   <div className="flex items-center gap-1.5">
                     <Calendar size={14} />
                     <span>{format(new Date(event.event_date), "EEEE, MMM d 'at' h:mm a")}</span>
@@ -61,18 +61,17 @@ export default async function Home() {
                     <MapPin size={14} />
                     <span>{event.location || 'Location TBD'}</span>
                   </div>
+                  <p>Spots open: {spotsOpen} of {event.v_capacity}</p>
                 </div>
 
-                <p className="text-sm text-msa-green dark:text-[#3B9A72] mt-1">
-                  Spots open: {spotsOpen} of {event.v_capacity}
-                </p>
-
-                <EventSignUpButton
-                  eventId={event.id}
-                  eventName={event.name}
-                  eventDate={event.event_date}
-                  location={event.location}
-                />
+                <div className="border-t border-gray-100 dark:border-gray-700 mt-3 pt-3">
+                  <EventSignUpButton
+                    eventId={event.id}
+                    eventName={event.name}
+                    eventDate={event.event_date}
+                    location={event.location}
+                  />
+                </div>
               </li>
             )
           })}
