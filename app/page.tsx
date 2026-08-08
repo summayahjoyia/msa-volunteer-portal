@@ -22,7 +22,9 @@ export default async function Home() {
     <main className="p-8 max-w-2xl mx-auto">
       <div className="relative mb-8 text-center">
         <UserStatusBar />
-        <p className="text-msa-gold text-sm tracking-wide mb-1">بِسْمِ اللَّهِ</p>
+        <p className="text-msa-gold text-base sm:text-lg tracking-wide mb-2" style={{ fontFamily: 'serif' }}>
+  بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+</p>
         <h1 className="text-2xl font-bold text-msa-green-dark">Upcoming Events</h1>
         <p className="text-sm text-gray-500 mt-1">Give a little time, earn a lasting reward</p>
       </div>

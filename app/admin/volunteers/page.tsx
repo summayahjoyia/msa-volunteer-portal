@@ -40,7 +40,9 @@ export default function VolunteerHistory() {
   return (
     <>
       <div className="pt-8 text-center">
-        <p className="text-msa-gold text-sm tracking-wide mb-1">بِسْمِ اللَّهِ</p>
+        <p className="text-msa-gold text-base sm:text-lg tracking-wide mb-2" style={{ fontFamily: 'serif' }}>
+  بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+</p>
         <h1 className="text-2xl font-bold text-msa-green-dark">Volunteer History</h1>
       </div>
 

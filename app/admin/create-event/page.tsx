@@ -118,7 +118,9 @@ export default function CreateEvent() {
       <AdminNav />
       <main className="p-8 max-w-2xl mx-auto">
         <div className="mb-6 text-center">
-          <p className="text-msa-gold text-sm tracking-wide mb-1">بِسْمِ اللَّهِ</p>
+          <p className="text-msa-gold text-base sm:text-lg tracking-wide mb-2" style={{ fontFamily: 'serif' }}>
+  بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+</p>
           <h1 className="text-2xl font-bold text-msa-green-dark">Create Event</h1>
         </div>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 bg-white rounded-xl p-6 shadow-sm border-t-4 border-msa-gold">
