@@ -21,12 +21,12 @@ export default async function Home() {
 
   return (
     <main className="p-8 max-w-2xl mx-auto min-h-screen bg-background transition-colors">
-      <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
+      <div className="mb-6 flex items-center gap-3">
         <ThemeToggle />
+        <UserStatusBar />
       </div>
 
-      <div className="relative mb-8 text-center">
-        <UserStatusBar />
+      <div className="text-center mb-8">
         <p
           className="text-msa-gold text-base sm:text-lg tracking-wide mb-2"
           style={{ fontFamily: 'serif' }}
