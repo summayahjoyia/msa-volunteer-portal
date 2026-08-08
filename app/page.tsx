@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import UserStatusBar from './components/UserStatusBar'
+import ProfilePill from './components/ProfilePill'
 import EventSignUpButton from './components/EventSignUpButton'
 import ThemeToggle from './components/ThemeToggle'
 import { format } from 'date-fns'
@@ -23,7 +23,7 @@ export default async function Home() {
     <main className="p-8 max-w-2xl mx-auto min-h-screen bg-background transition-colors">
       <div className="mb-6 flex items-center gap-3">
         <ThemeToggle />
-        <UserStatusBar />
+        <ProfilePill />
       </div>
 
       <div className="text-center mb-8">
