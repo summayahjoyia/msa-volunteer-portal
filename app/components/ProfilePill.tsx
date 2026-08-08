@@ -71,7 +71,7 @@ export default function ProfilePill() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#2A2A2D] rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-10">
+        <div className="absolute left-0 mt-2 w-48 bg-white dark:bg-[#2A2A2D] rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-50">
           <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 truncate">
             {user.name || user.email}
           </div>
