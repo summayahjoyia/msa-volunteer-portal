@@ -68,9 +68,9 @@ export default function VolunteerHistory() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-msa-cream dark:bg-[#3A3A3D]">
-                  <th className="text-left px-4 py-2.5 font-semibold" style={{ color: '#0B3D2E' }}>Name</th>
-                  <th className="text-left px-4 py-2.5 font-semibold hidden sm:table-cell" style={{ color: '#0B3D2E' }}>Email</th>
-                  <th className="text-center px-4 py-2.5 font-semibold" style={{ color: '#0B3D2E' }}>Events</th>
+                  <th className="text-left px-4 py-2.5 font-semibold text-[#0B3D2E] dark:text-msa-gold">Name</th>
+                  <th className="text-left px-4 py-2.5 font-semibold text-[#0B3D2E] dark:text-msa-gold hidden sm:table-cell">Email</th>
+                  <th className="text-center px-4 py-2.5 font-semibold text-[#0B3D2E] dark:text-msa-gold">Events</th>
                   <th className="w-8"></th>
                 </tr>
               </thead>
