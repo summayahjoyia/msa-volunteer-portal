@@ -4,6 +4,7 @@ import BulkMessageForm from '../components/BulkMessageForm'
 import DeleteEventButton from '../components/DeleteEventButton'
 import ExportButton from '../components/ExportButton'
 import AdminTabs from '../components/AdminTabs'
+import ThemeToggle from '../components/ThemeToggle'
 import Link from 'next/link'
 import { Pencil } from 'lucide-react'
 export const dynamic = 'force-dynamic'
@@ -40,9 +41,9 @@ export default async function AdminDashboard() {
 
   function renderEventCard(event: any) {
     return (
-      <li key={event.id} className="bg-white rounded-xl p-5 shadow-sm border-t-4 border-msa-gold">
+      <li key={event.id} className="bg-white dark:bg-[#2A2A2D] rounded-xl p-5 shadow-sm border-t-4 border-msa-gold transition-colors">
         <div className="flex justify-between items-start gap-3">
-          <h2 className="text-lg font-semibold text-msa-green-dark">{event.name}</h2>
+          <h2 className="text-lg font-semibold text-msa-green-dark dark:text-msa-cream">{event.name}</h2>
           <div className="flex gap-1 items-center shrink-0">
             <Link
               href={`/admin/edit-event/${event.id}`}
@@ -54,18 +55,18 @@ export default async function AdminDashboard() {
             <DeleteEventButton eventId={event.id} seriesId={event.series_id} />
           </div>
         </div>
-        <p className="text-sm text-gray-600 mb-2">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
           {event.location}, {new Date(event.event_date).toLocaleString()}
         </p>
-        <p className="text-sm mb-2 text-msa-green">
+        <p className="text-sm mb-2 text-msa-green dark:text-[#3B9A72]">
           Sign-ups: {event.signups?.length || 0} / {event.v_capacity}
         </p>
         {event.signups && event.signups.length > 0 ? (
           <ul className="text-sm space-y-1 mt-2">
             {event.signups.map((s: any) => (
-              <li key={s.id} className="flex justify-between items-center border-t border-gray-100 pt-1">
+              <li key={s.id} className="flex justify-between items-center border-t border-gray-100 dark:border-gray-700 pt-1">
                 <div>
-                  <div className="text-gray-900">{s.volunteers?.name}</div>
+                  <div className="text-gray-900 dark:text-gray-100">{s.volunteers?.name}</div>
                   <div className="text-xs text-gray-400">{s.volunteers?.email}</div>
                 </div>
                 <MarkAttendanceButton signupId={s.id} currentStatus={s.status} />
@@ -83,12 +84,16 @@ export default async function AdminDashboard() {
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-background transition-colors relative">
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
+        <ThemeToggle />
+      </div>
+
       <div className="pt-8 text-center">
         <p className="text-msa-gold text-base sm:text-lg tracking-wide mb-2" style={{ fontFamily: 'serif' }}>
-  بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-</p>
-        <h1 className="text-2xl font-bold text-msa-green-dark">Admin Dashboard</h1>
+          بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+        </p>
+        <h1 className="text-2xl font-bold text-msa-green-dark dark:text-msa-cream">Admin Dashboard</h1>
       </div>
 
       <AdminTabs
@@ -96,16 +101,16 @@ export default async function AdminDashboard() {
       />
 
       <main className="p-8 max-w-3xl mx-auto">
-        <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Upcoming</h2>
+        <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Upcoming</h2>
         {upcomingEvents.length > 0 ? (
           <ul className="space-y-6">{upcomingEvents.map(renderEventCard)}</ul>
         ) : (
-          <p className="text-gray-500 mb-6">No upcoming events.</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-6">No upcoming events.</p>
         )}
 
         {pastEvents.length > 0 && (
           <details className="mt-10 group">
-            <summary className="text-sm font-medium text-gray-500 uppercase tracking-wide cursor-pointer select-none list-none flex items-center gap-1">
+            <summary className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide cursor-pointer select-none list-none flex items-center gap-1">
               <span className="transition-transform group-open:rotate-90">▸</span>
               Past events ({pastEvents.length})
             </summary>
@@ -113,6 +118,6 @@ export default async function AdminDashboard() {
           </details>
         )}
       </main>
-    </>
+    </div>
   )
 }
