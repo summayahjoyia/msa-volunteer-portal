@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --background: #F5F1E8;
@@ -6,6 +7,15 @@
   --msa-green-dark: #0B3D2E;
   --msa-green: #1F7A5C;
   --msa-gold: #D4A537;
+  --msa-cream: #F5F1E8;
+}
+
+.dark {
+  --background: #1C1C1E;
+  --foreground: #F5F1E8;
+  --msa-green-dark: #E8E4D8;
+  --msa-green: #3B9A72;
+  --msa-gold: #E0B84D;
   --msa-cream: #F5F1E8;
 }
 
@@ -23,6 +33,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-poppins), sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .rdp {
