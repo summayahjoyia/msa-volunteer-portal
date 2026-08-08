@@ -1,9 +1,11 @@
 import { supabase } from '@/lib/supabase'
 import UserStatusBar from './components/UserStatusBar'
 import EventSignUpButton from './components/EventSignUpButton'
+import { format } from 'date-fns'
+import { Calendar, MapPin } from 'lucide-react'
+
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
-
 
 export default async function Home() {
   const { data: events, error } = await supabase
@@ -34,10 +36,20 @@ export default async function Home() {
             >
               <h2 className="text-lg font-semibold text-msa-green-dark">{event.name}</h2>
               {event.description && <p className="text-sm text-gray-600 mt-1">{event.description}</p>}
-              <p className="text-sm mt-3 text-msa-green">
-                {event.location || 'TBD'}, {new Date(event.event_date).toLocaleString()}
-              </p>
-              <p className="text-sm text-msa-green">Spots needed: {event.v_capacity}</p>
+
+              <div className="mt-3 space-y-1 text-sm text-msa-green">
+                <div className="flex items-center gap-1.5">
+                  <Calendar size={14} />
+                  <span>{format(new Date(event.event_date), "EEEE, MMM d 'at' h:mm a")}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <MapPin size={14} />
+                  <span>{event.location || 'Location TBD'}</span>
+                </div>
+              </div>
+
+              <p className="text-sm text-msa-green mt-1">Volunteers needed: {event.v_capacity}</p>
+
               <EventSignUpButton
                 eventId={event.id}
                 eventName={event.name}
