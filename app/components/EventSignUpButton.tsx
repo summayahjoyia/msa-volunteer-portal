@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
+import { useRouter } from 'next/navigation'
 
 export default function EventSignUpButton({
   eventId,
@@ -15,6 +16,7 @@ export default function EventSignUpButton({
   location: string
 }) {
   const supabase = createClient()
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [volunteer, setVolunteer] = useState<{ id: number; name: string; email: string } | null>(null)
   const [signupId, setSignupId] = useState<number | null>(null)
@@ -85,6 +87,7 @@ export default function EventSignUpButton({
     })
 
     setStatus('signed_up')
+    router.refresh()
   }
 
   async function handleCancel() {
@@ -101,13 +104,14 @@ export default function EventSignUpButton({
 
     setSignupId(null)
     setStatus('cancelled')
+    router.refresh()
   }
 
   if (loading) return null
 
   if (!volunteer) {
     return (
-      <p className="mt-3 text-sm text-gray-500">Sign in with Google above to sign up.</p>
+      <p className="mt-3 text-sm text-gray-500">Sign in with Google to sign up.</p>
     )
   }
 
@@ -124,9 +128,9 @@ export default function EventSignUpButton({
         )}
         <button
           onClick={handleCancel}
-          className="mt-2 text-xs text-gray-400 hover:text-red-600 underline underline-offset-4 transition"
+          className="mt-2 text-xs text-red-400 hover:text-red-600 underline underline-offset-4 transition"
         >
-          Cancel my spot
+          I can't make it.
         </button>
       </div>
     )
