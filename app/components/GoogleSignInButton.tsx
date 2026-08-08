@@ -17,7 +17,14 @@ export default function GoogleSignInButton({ redirectPath = '/' }: { redirectPat
   return (
     <button
       onClick={signInWithGoogle}
-      className="flex items-center justify-center gap-2 border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition w-full"
+      className="flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition w-full"
+      style={{
+        backgroundColor: '#FFFFFF',
+        color: '#374151',
+        border: '1px solid #D1D5DB',
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F9FAFB')}
+      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
     >
       <svg width="18" height="18" viewBox="0 0 48 48">
         <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/>

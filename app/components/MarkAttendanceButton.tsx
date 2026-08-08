@@ -11,7 +11,6 @@ export default function MarkAttendanceButton({ signupId, currentStatus }: { sign
   const router = useRouter()
 
   async function updateStatus(newStatus: string) {
-    // Clicking the already-active state unmarks it back to "confirmed"
     const nextStatus = status === newStatus ? 'confirmed' : newStatus
     setLoading(true)
     const { error } = await supabase
@@ -29,7 +28,7 @@ export default function MarkAttendanceButton({ signupId, currentStatus }: { sign
   const isAbsent = status === 'absent'
 
   return (
-    <div className="flex gap-1.5">
+    <div className="flex gap-3">
       <button
         onClick={() => updateStatus('attended')}
         disabled={loading}
@@ -37,7 +36,7 @@ export default function MarkAttendanceButton({ signupId, currentStatus }: { sign
         className={`w-7 h-7 rounded-md border flex items-center justify-center transition ${
           isAttended
             ? 'bg-msa-green border-msa-green text-white'
-            : 'border-gray-200 text-gray-300 hover:border-msa-green hover:text-msa-green'
+            : 'border-gray-200 dark:border-gray-600 text-gray-300 dark:text-gray-500 hover:border-msa-green hover:text-msa-green'
         }`}
       >
         <Check size={16} />
@@ -49,7 +48,7 @@ export default function MarkAttendanceButton({ signupId, currentStatus }: { sign
         className={`w-7 h-7 rounded-md border flex items-center justify-center transition ${
           isAbsent
             ? 'bg-red-600 border-red-600 text-white'
-            : 'border-gray-200 text-gray-300 hover:border-red-600 hover:text-red-600'
+            : 'border-gray-200 dark:border-gray-600 text-gray-300 dark:text-gray-500 hover:border-red-600 hover:text-red-600'
         }`}
       >
         <X size={16} />

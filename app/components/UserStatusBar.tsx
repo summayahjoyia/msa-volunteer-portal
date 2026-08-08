@@ -32,15 +32,15 @@ export default function UserStatusBar() {
 
   if (!user) {
     return (
-      <div className="max-w-md mx-auto mb-6">
+      <div className="w-full">
         <GoogleSignInButton redirectPath="/" />
       </div>
     )
   }
 
   return (
-    <div className="max-w-2xl mx-auto mb-6 flex items-center justify-between gap-4 text-sm bg-white rounded-lg px-5 py-3 shadow-sm">
-      <span className="text-gray-600">
+    <div className="w-full flex items-center justify-between gap-4 text-sm bg-white rounded-lg px-5 py-3 shadow-sm">
+      <span className="text-gray-600 truncate">
         Signed in as{' '}
         <span className="font-semibold" style={{ color: '#0B3D2E' }}>
           {user.name || user.email}
