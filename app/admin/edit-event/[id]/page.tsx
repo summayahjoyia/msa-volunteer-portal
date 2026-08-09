@@ -3,6 +3,12 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter, useParams } from 'next/navigation'
+import ThemeToggle from '../../../components/ThemeToggle'
+import AdminNav from '../../../components/AdminNav'
+
+const inputClass =
+  'border rounded px-2 py-1 bg-white dark:bg-[#2A2A2D] dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500'
+const labelClass = 'text-sm block mb-1 text-gray-700 dark:text-gray-300'
 
 export default function EditEvent() {
   const params = useParams()
@@ -116,28 +122,93 @@ export default function EditEvent() {
 
   if (locked) {
     return (
-      <main className="p-8 max-w-md mx-auto text-center">
-        <p className="text-gray-500">
-          This event has already happened and can no longer be edited.
-        </p>
-      </main>
+      <div className="min-h-screen bg-background transition-colors relative">
+        <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
+          <ThemeToggle />
+        </div>
+        <AdminNav />
+        <main className="p-8 max-w-md mx-auto text-center">
+          <p className="text-gray-500 dark:text-gray-400">
+            This event has already happened and can no longer be edited.
+          </p>
+        </main>
+      </div>
     )
   }
 
   return (
-    <main className="p-8 max-w-md mx-auto">
-      <h1 className="text-xl font-bold mb-4">Edit Event</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <input value={name} onChange={(e) => setName(e.target.value)} required className="border rounded px-2 py-1" />
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="border rounded px-2 py-1" rows={3} />
-        <input value={location} onChange={(e) => setLocation(e.target.value)} className="border rounded px-2 py-1" />
-        <input type="datetime-local" value={eventDate} onChange={(e) => setEventDate(e.target.value)} required className="border rounded px-2 py-1" />
-        <input type="number" value={capacity} onChange={(e) => setCapacity(Number(e.target.value))} required className="border rounded px-2 py-1" />
-        <button type="submit" disabled={status === 'submitting'} className="bg-black text-white rounded px-3 py-1">
-          {status === 'submitting' ? 'Saving...' : 'Save Changes'}
-        </button>
-        {status === 'error' && <p className="text-red-500 text-sm">Something went wrong — try again.</p>}
-      </form>
-    </main>
+    <div className="min-h-screen bg-background transition-colors relative">
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
+        <ThemeToggle />
+      </div>
+      <AdminNav />
+      <main className="p-8 max-w-md mx-auto">
+        <h1 className="text-xl font-bold mb-4 text-msa-green-dark dark:text-msa-cream">Edit Event</h1>
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-3 bg-white dark:bg-[#2A2A2D] rounded-xl p-6 shadow-sm border-t-4 border-msa-gold transition-colors"
+        >
+          <div>
+            <label className={labelClass}>Event name</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className={`${inputClass} w-full`}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className={`${inputClass} w-full`}
+              rows={3}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Location</label>
+            <input
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className={`${inputClass} w-full`}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Date &amp; time</label>
+            <input
+              type="datetime-local"
+              value={eventDate}
+              onChange={(e) => setEventDate(e.target.value)}
+              required
+              className={`${inputClass} w-full`}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Volunteers needed</label>
+            <input
+              type="number"
+              value={capacity}
+              onChange={(e) => setCapacity(Number(e.target.value))}
+              required
+              className={`${inputClass} w-full`}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={status === 'submitting'}
+            className="bg-msa-green text-white rounded-lg px-3 py-1.5 hover:bg-msa-green-dark transition mt-2"
+          >
+            {status === 'submitting' ? 'Saving...' : 'Save Changes'}
+          </button>
+          {status === 'error' && <p className="text-red-500 text-sm">Something went wrong — try again.</p>}
+        </form>
+      </main>
+    </div>
   )
 }
