@@ -12,7 +12,7 @@ Chosen to stay consistent with other MSA Digital Solutions projects (the iftar p
 
 ## Live site
 
-[msa-volunteer-portal.vercel.app](https://volunteer.msauofa.ca/)
+[https://volunteer.msauofa.ca/](https://volunteer.msauofa.ca/)
 
 ## Status
 
