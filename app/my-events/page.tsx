@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
+import { useAuth } from '../components/AuthProvider'
 import ThemeToggle from '../components/ThemeToggle'
 import ProfilePill from '../components/ProfilePill'
 import Link from 'next/link'
@@ -15,14 +16,14 @@ type SignupRow = {
 
 export default function MyEvents() {
   const supabase = createClient()
+  const { user, loading: authLoading } = useAuth()
   const [loading, setLoading] = useState(true)
   const [rows, setRows] = useState<SignupRow[]>([])
 
   useEffect(() => {
     async function load() {
-      const { data: authData } = await supabase.auth.getUser()
-      const email = authData?.user?.email
-      if (!email) {
+      if (authLoading) return
+      if (!user?.email) {
         setLoading(false)
         return
       }
@@ -30,7 +31,7 @@ export default function MyEvents() {
       const { data: volunteer } = await supabase
         .from('volunteers')
         .select('id')
-        .eq('email', email)
+        .eq('email', user.email)
         .single()
 
       if (volunteer) {
@@ -43,7 +44,7 @@ export default function MyEvents() {
       setLoading(false)
     }
     load()
-  }, [])
+  }, [authLoading, user?.email])
 
   const now = new Date()
   const upcoming = rows
@@ -82,7 +83,7 @@ export default function MyEvents() {
         </p>
       </div>
 
-      {loading ? (
+      {authLoading || loading ? (
         <p className="text-gray-500 dark:text-gray-400 text-center">Loading...</p>
       ) : (
         <>

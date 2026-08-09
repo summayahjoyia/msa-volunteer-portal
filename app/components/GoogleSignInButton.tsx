@@ -17,7 +17,7 @@ export default function GoogleSignInButton({ redirectPath = '/' }: { redirectPat
   return (
     <button
       onClick={signInWithGoogle}
-      className="flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition w-full"
+      className="flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition whitespace-nowrap"
       style={{
         backgroundColor: '#FFFFFF',
         color: '#374151',

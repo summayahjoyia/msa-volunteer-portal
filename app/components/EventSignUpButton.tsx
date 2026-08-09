@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
+import { useAuth } from './AuthProvider'
 import { useRouter } from 'next/navigation'
 
 export default function EventSignUpButton({
@@ -17,6 +18,8 @@ export default function EventSignUpButton({
 }) {
   const supabase = createClient()
   const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
+
   const [loading, setLoading] = useState(true)
   const [volunteer, setVolunteer] = useState<{ id: number; name: string; email: string } | null>(null)
   const [signupId, setSignupId] = useState<number | null>(null)
@@ -25,8 +28,7 @@ export default function EventSignUpButton({
 
   useEffect(() => {
     async function loadVolunteer() {
-      const { data: authData } = await supabase.auth.getUser()
-      const user = authData?.user
+      if (authLoading) return
       if (!user?.email) {
         setLoading(false)
         return
@@ -54,7 +56,7 @@ export default function EventSignUpButton({
       setLoading(false)
     }
     loadVolunteer()
-  }, [eventId])
+  }, [eventId, authLoading, user?.email])
 
   async function handleSignUp() {
     if (!volunteer) return
@@ -107,11 +109,11 @@ export default function EventSignUpButton({
     router.refresh()
   }
 
-  if (loading) return null
+  if (authLoading || loading) return null
 
-  if (!volunteer) {
+  if (!user || !volunteer) {
     return (
-      <p className="mt-3 text-sm text-gray-500">Sign in with Google above to sign up.</p>
+      <p className="mt-3 text-sm text-gray-500">Sign in to sign up for this event.</p>
     )
   }
 

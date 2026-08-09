@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
+import { useAuth } from './AuthProvider'
 import { ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import GoogleSignInButton from './GoogleSignInButton'
@@ -15,25 +16,10 @@ function getInitials(nameOrEmail: string) {
 }
 
 export default function ProfilePill() {
-  const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null)
+  const { user, loading } = useAuth()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const supabase = createClient()
-
-  useEffect(() => {
-    async function loadUser() {
-      const { data } = await supabase.auth.getUser()
-      if (data?.user) {
-        setUser({
-          name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || '',
-          email: data.user.email || '',
-        })
-      }
-      setLoading(false)
-    }
-    loadUser()
-  }, [])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
