@@ -3,11 +3,20 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Pencil, ArrowUpDown } from 'lucide-react'
+import { format } from 'date-fns'
 import MarkAttendanceButton from './MarkAttendanceButton'
 import BulkMessageForm from './BulkMessageForm'
 import DeleteEventButton from './DeleteEventButton'
+import ShareEventButton from './ShareEventButton'
 
 type SortMode = 'date' | 'alpha'
+
+function formatEventTime(start: string, end: string | null) {
+  const startStr = format(new Date(start), "EEEE, MMM d 'at' h:mm a")
+  if (!end) return startStr
+  const endStr = format(new Date(end), 'h:mm a')
+  return `${startStr} – ${endStr}`
+}
 
 export default function EventsList({ events }: { events: any[] }) {
   const [upcomingSort, setUpcomingSort] = useState<SortMode>('date')
@@ -21,7 +30,7 @@ export default function EventsList({ events }: { events: any[] }) {
     if (upcomingSort === 'alpha') {
       return [...list].sort((a, b) => a.name.localeCompare(b.name))
     }
-    return [...list].sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
+    return [...list].sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime())
   }, [events, upcomingSort])
 
   const pastEvents = useMemo(() => {
@@ -53,6 +62,7 @@ export default function EventsList({ events }: { events: any[] }) {
         <div className="flex justify-between items-start gap-3">
           <h2 className="text-lg font-semibold text-msa-green-dark dark:text-msa-cream">{event.name}</h2>
           <div className="flex gap-1 items-center shrink-0">
+            <ShareEventButton eventId={event.id} />
             {editable && (
               <Link
                 href={`/admin/edit-event/${event.id}`}
@@ -66,7 +76,7 @@ export default function EventsList({ events }: { events: any[] }) {
           </div>
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-          {event.location}, {new Date(event.event_date).toLocaleString()}
+          {event.location}, {formatEventTime(event.event_date, event.event_end_date)}
         </p>
         <p className="text-sm mb-2 text-msa-green dark:text-[#3B9A72]">
           Sign-ups: {event.signups?.length || 0} / {event.v_capacity}

@@ -32,6 +32,7 @@ export default function CreateEvent() {
   const [customLocation, setCustomLocation] = useState('')
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
   const [time, setTime] = useState('14:00')
+  const [endTime, setEndTime] = useState('')
   const [capacity, setCapacity] = useState(5)
   const [recurrence, setRecurrence] = useState<RecurrenceType>('none')
   const [occurrences, setOccurrences] = useState(4)
@@ -86,6 +87,17 @@ export default function CreateEvent() {
       return
     }
 
+    if (endTime) {
+      const [endHours, endMinutes] = endTime.split(':').map(Number)
+      const endMinutesTotal = endHours * 60 + endMinutes
+      const startMinutesTotal = hours * 60 + minutes
+      if (endMinutesTotal <= startMinutesTotal) {
+        setStatus('error')
+        setErrorMessage('End time must be after the start time.')
+        return
+      }
+    }
+
     setStatus('submitting')
     setErrorMessage('')
 
@@ -94,11 +106,21 @@ export default function CreateEvent() {
     const rows = generatedDates.map((d) => {
       const eventDateTime = new Date(d)
       eventDateTime.setHours(hours, minutes)
+
+      let eventEndDateTime: string | null = null
+      if (endTime) {
+        const [endHours, endMinutes] = endTime.split(':').map(Number)
+        const endDateTime = new Date(d)
+        endDateTime.setHours(endHours, endMinutes)
+        eventEndDateTime = endDateTime.toISOString()
+      }
+
       return {
         name,
         description,
         location,
         event_date: eventDateTime.toISOString(),
+        event_end_date: eventEndDateTime,
         v_capacity: capacity,
         is_recurring: recurrence !== 'none',
         series_id: seriesId,
@@ -143,7 +165,7 @@ export default function CreateEvent() {
           <div className="flex flex-col gap-2">
             <label className="text-sm block text-gray-700 dark:text-gray-300">Description</label>
             <div>
-              <label className="text-xs text-gray-600 dark:text-gray-400 block">What will volunteers be doing?</label>
+              <label className="text-xs text-g-600 dark:text-gray-400 block">What will volunteers be doing?</label>
               <textarea
                 placeholder="e.g. Help set up chairs and prayer mats before Jummah"
                 value={task}
@@ -223,14 +245,29 @@ export default function CreateEvent() {
             </div>
           </div>
 
-          <input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            min={minTime}
-            required
-            className={inputClass}
-          />
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">Start time</label>
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                min={minTime}
+                required
+                className={`${inputClass} w-full`}
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">End time (optional)</label>
+              <input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className={`${inputClass} w-full`}
+              />
+            </div>
+          </div>
+
           <input
             type="number"
             placeholder="Volunteers needed"

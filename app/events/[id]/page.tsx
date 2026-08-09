@@ -1,0 +1,92 @@
+import { supabase } from '@/lib/supabase'
+import ProfilePill from '../../components/ProfilePill'
+import EventSignUpButton from '../../components/EventSignUpButton'
+import ThemeToggle from '../../components/ThemeToggle'
+import Link from 'next/link'
+import { format } from 'date-fns'
+import { Calendar, MapPin, ChevronLeft } from 'lucide-react'
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+function formatEventTime(start: string, end: string | null) {
+  const startStr = format(new Date(start), "EEEE, MMM d 'at' h:mm a")
+  if (!end) return startStr
+  const endStr = format(new Date(end), 'h:mm a')
+  return `${startStr} – ${endStr}`
+}
+
+export default async function EventPage({ params }: { params: { id: string } }) {
+  const { data: event, error } = await supabase
+    .from('events')
+    .select('*, signups(id)')
+    .eq('id', params.id)
+    .single()
+
+  if (error || !event) {
+    return (
+      <main className="p-8 max-w-2xl mx-auto min-h-screen bg-background transition-colors text-center">
+        <p className="text-gray-500 dark:text-gray-400">This event could not be found.</p>
+        <Link href="/" className="text-msa-green underline text-sm mt-2 inline-block">
+          Back to all events
+        </Link>
+      </main>
+    )
+  }
+
+  const signedUpCount = event.signups?.length || 0
+  const spotsOpen = Math.max(event.v_capacity - signedUpCount, 0)
+
+  return (
+    <main className="p-8 max-w-2xl mx-auto min-h-screen bg-background transition-colors">
+      <div className="mb-6 flex items-center gap-3">
+        <ThemeToggle />
+        <div className="flex-1 flex justify-end">
+          <ProfilePill />
+        </div>
+      </div>
+
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-msa-green-dark dark:hover:text-msa-cream transition mb-6"
+      >
+        <ChevronLeft size={16} />
+        All Events
+      </Link>
+
+      <div className="text-center mb-8">
+        <p className="text-msa-gold text-base sm:text-lg tracking-wide mb-2" style={{ fontFamily: 'serif' }}>
+          بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+        </p>
+      </div>
+
+      <div className="bg-white dark:bg-[#2A2A2D] rounded-xl p-6 shadow-sm border-t-4 border-msa-gold transition-colors">
+        <h1 className="text-xl font-bold text-msa-green-dark dark:text-msa-cream">{event.name}</h1>
+        {event.description && (
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{event.description}</p>
+        )}
+
+        <div className="mt-4 space-y-1 text-sm text-gray-500 dark:text-gray-400">
+          <div className="flex items-center gap-1.5">
+            <Calendar size={14} />
+            <span>{formatEventTime(event.event_date, event.event_end_date)}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <MapPin size={14} />
+            <span>{event.location || 'Location TBD'}</span>
+          </div>
+          <p>Spots open: {spotsOpen} of {event.v_capacity}</p>
+        </div>
+
+        <div className="border-t border-gray-100 dark:border-gray-700 mt-4 pt-4">
+          <EventSignUpButton
+            eventId={event.id}
+            eventName={event.name}
+            eventDate={event.event_date}
+            location={event.location}
+          />
+        </div>
+      </div>
+    </main>
+  )
+}
