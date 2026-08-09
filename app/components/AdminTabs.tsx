@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Plus, LogOut, ExternalLink } from 'lucide-react'
+import { Plus, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase-browser'
 
 export default function AdminTabs({
@@ -15,6 +15,7 @@ export default function AdminTabs({
   const supabase = createClient()
   const isVolunteers = pathname === '/admin/volunteers'
   const isEvents = pathname === '/admin'
+  const isSignUp = pathname === '/admin/volunteer-signup'
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -44,6 +45,16 @@ export default function AdminTabs({
         >
           Volunteers
         </Link>
+        <Link
+          href="/admin/volunteer-signup"
+          className={`text-sm pb-2.5 shrink-0 ${
+            isSignUp
+              ? 'text-msa-green-dark font-medium border-b-2 border-msa-green-dark'
+              : 'text-gray-500'
+          }`}
+        >
+          Sign Up
+        </Link>
 
         {exportSlot}
 
@@ -56,14 +67,6 @@ export default function AdminTabs({
             Create event
           </Link>
         )}
-
-        <Link
-          href="/"
-          className="text-sm text-gray-500 hover:text-msa-green transition flex items-center gap-1.5 pb-2.5 shrink-0"
-        >
-          <ExternalLink size={14} />
-          Sign up as volunteer
-        </Link>
 
         <button
           onClick={handleSignOut}

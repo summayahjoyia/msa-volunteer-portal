@@ -115,7 +115,7 @@ export default function EventsList({ events }: { events: any[] }) {
       )}
 
       {totalPastCount > 0 && (
-        <details className="mt-10 group">
+        <details className="mt-10 group px-1 sm:px-0">
           <summary className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide cursor-pointer select-none list-none flex items-center gap-1">
             <span className="transition-transform group-open:rotate-90">▸</span>
             Past events ({totalPastCount})
@@ -138,7 +138,7 @@ export default function EventsList({ events }: { events: any[] }) {
           </div>
 
           {pastEvents.length > 0 ? (
-            <ul className="space-y-6">{pastEvents.map(renderEventCard)}</ul>
+            <ul className="space-y-6 px-1 sm:px-0">{pastEvents.map(renderEventCard)}</ul>
           ) : (
             <p className="text-gray-500 dark:text-gray-400 text-sm">No past events match your search.</p>
           )}
