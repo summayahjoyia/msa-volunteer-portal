@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Pencil, ArrowUpDown } from 'lucide-react'
+import { Pencil, ArrowUpDown, Calendar, MapPin } from 'lucide-react'
 import { format } from 'date-fns'
 import MarkAttendanceButton from './MarkAttendanceButton'
 import BulkMessageForm from './BulkMessageForm'
@@ -11,8 +11,12 @@ import ShareEventButton from './ShareEventButton'
 
 type SortMode = 'date' | 'alpha'
 
+function formatEventDate(start: string) {
+  return format(new Date(start), 'EEEE, MMM d')
+}
+
 function formatEventTime(start: string, end: string | null) {
-  const startStr = format(new Date(start), "EEEE, MMM d 'at' h:mm a")
+  const startStr = format(new Date(start), 'h:mm a')
   if (!end) return startStr
   const endStr = format(new Date(end), 'h:mm a')
   return `${startStr} – ${endStr}`
@@ -76,10 +80,22 @@ export default function EventsList({ events }: { events: any[] }) {
             <DeleteEventButton eventId={event.id} seriesId={event.series_id} />
           </div>
         </div>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-          {event.location}, {formatEventTime(event.event_date, event.event_end_date)}
-        </p>
-        <p className="text-sm mb-2 text-msa-green dark:text-[#3B9A72]">
+
+        <div className="mt-2 space-y-1 text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex items-start gap-1.5">
+            <Calendar size={14} className="mt-0.5 shrink-0" />
+            <div>
+              <div>{formatEventDate(event.event_date)}</div>
+              <div>{formatEventTime(event.event_date, event.event_end_date)}</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <MapPin size={14} />
+            <span>{event.location}</span>
+          </div>
+        </div>
+
+        <p className="text-sm mt-2 mb-2 text-msa-green dark:text-[#3B9A72]">
           Sign-ups: {event.signups?.length || 0} / {event.v_capacity}
         </p>
         {event.signups && event.signups.length > 0 ? (

@@ -9,8 +9,12 @@ import { Calendar, MapPin } from 'lucide-react'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+function formatEventDate(start: string) {
+  return format(new Date(start), 'EEEE, MMM d')
+}
+
 function formatEventTime(start: string, end: string | null) {
-  const startStr = format(new Date(start), "EEEE, MMM d 'at' h:mm a")
+  const startStr = format(new Date(start), 'h:mm a')
   if (!end) return startStr
   const endStr = format(new Date(end), 'h:mm a')
   return `${startStr} – ${endStr}`
@@ -65,10 +69,13 @@ export default async function Home() {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{event.description}</p>
                 )}
 
-                <div className="mt-3 space-y-1 text-sm text-gray-500 dark:text-gray-400">
-                  <div className="flex items-center gap-1.5">
-                    <Calendar size={14} />
-                    <span>{formatEventTime(event.event_date, event.event_end_date)}</span>
+                <div className="mt-3 space-y-1.5 text-sm text-gray-500 dark:text-gray-400">
+                  <div className="flex items-start gap-1.5">
+                    <Calendar size={14} className="mt-0.5 shrink-0" />
+                    <div>
+                      <div>{formatEventDate(event.event_date)}</div>
+                      <div>{formatEventTime(event.event_date, event.event_end_date)}</div>
+                    </div>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <MapPin size={14} />
