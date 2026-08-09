@@ -43,25 +43,24 @@ body {
   --rdp-outline: 2px solid #1F7A5C;
   --rdp-outline-selected: 2px solid #1F7A5C;
   --rdp-animation-duration: 0s;
+  margin: 0 auto;
 }
 
 .rdp-chevron {
   fill: var(--msa-green) !important;
 }
-.rdp-nav {
-  position: static !important;
-  display: flex;
-  gap: 8px;
+
+.rdp-months,
+.rdp-month {
+  width: 100%;
 }
 
 .rdp-month_caption {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 0.25rem;
 }
 
-.rdp-months, .rdp-month {
-  width: 100%;
-  overflow: hidden;
+.rdp-nav {
+  position: static;
 }

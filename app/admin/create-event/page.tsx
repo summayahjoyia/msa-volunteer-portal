@@ -223,7 +223,7 @@ export default function CreateEvent() {
 
           <div>
             <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">Start date</label>
-            <div className="w-full bg-white dark:bg-[#242426] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex justify-center">
+            <div className="flex justify-center">
               <DayPicker
                 mode="single"
                 selected={startDate}
