@@ -121,16 +121,16 @@ export default function EventsList({ events }: { events: any[] }) {
             Past events ({totalPastCount})
           </summary>
 
-          <div className="flex items-center gap-3 mt-4 mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mt-4 mb-4">
             <input
               placeholder="Search past events by name or location..."
               value={pastSearch}
               onChange={(e) => setPastSearch(e.target.value)}
-              className="border rounded-lg px-3 py-2 text-sm flex-1 bg-white dark:bg-[#2A2A2D] dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500"
+              className="border rounded-lg px-3 py-2.5 sm:py-2 text-sm w-full sm:flex-1 bg-white dark:bg-[#2A2A2D] dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500"
             />
             <button
               onClick={() => setPastSort(pastSort === 'date' ? 'alpha' : 'date')}
-              className="text-xs text-gray-500 dark:text-gray-400 hover:text-msa-green flex items-center gap-1.5 shrink-0 whitespace-nowrap"
+              className="text-xs text-gray-500 dark:text-gray-400 hover:text-msa-green flex items-center justify-center sm:justify-start gap-1.5 shrink-0 whitespace-nowrap border sm:border-0 border-gray-200 dark:border-gray-700 rounded-lg py-2 sm:py-0"
             >
               <ArrowUpDown size={13} />
               {pastSort === 'date' ? 'Sort: Date' : 'Sort: A-Z'}
