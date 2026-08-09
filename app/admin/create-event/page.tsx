@@ -165,7 +165,7 @@ export default function CreateEvent() {
           <div className="flex flex-col gap-2">
             <label className="text-sm block text-gray-700 dark:text-gray-300">Description</label>
             <div>
-              <label className="text-xs text-g-600 dark:text-gray-400 block">What will volunteers be doing?</label>
+              <label className="text-xs text-gray-600 dark:text-gray-400 block">What will volunteers be doing?</label>
               <textarea
                 placeholder="e.g. Help set up chairs and prayer mats before Jummah"
                 value={task}
@@ -245,7 +245,7 @@ export default function CreateEvent() {
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
               <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">Start time</label>
               <input
