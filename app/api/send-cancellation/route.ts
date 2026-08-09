@@ -12,7 +12,7 @@ export async function POST(request: Request) {
       to: emails,
       subject: `Cancelled: ${eventName}`,
       html: `
-        <p>Assalamu Alaikum,</p>
+        <p>Assalam Alaikum,</p>
         <p><strong>${eventName}</strong> (originally scheduled for ${new Date(eventDate).toLocaleString()}) has been cancelled.</p>
         <p>We're sorry for any inconvenience — JazakAllah Khair for your willingness to volunteer, and we hope to see you at a future event!</p>
       `,
