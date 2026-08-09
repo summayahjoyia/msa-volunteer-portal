@@ -58,9 +58,11 @@ export default function MyEvents() {
 
   return (
     <main className="p-8 max-w-2xl mx-auto min-h-screen bg-background transition-colors">
-      <div className="mb-6 flex items-center gap-4">
+      <div className="mb-6 flex items-center gap-3">
         <ThemeToggle />
-        <ProfilePill />
+        <div className="flex-1 flex justify-end">
+          <ProfilePill />
+        </div>
       </div>
 
       <Link
