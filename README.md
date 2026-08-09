@@ -20,7 +20,7 @@ Chosen to stay consistent with other MSA Digital Solutions projects (the iftar p
 
 ## Roadmap
 
-**V1**
+**V1 [complete] ** 
 - Mobile-first UI
 - Event postings
 - One-click sign-up
