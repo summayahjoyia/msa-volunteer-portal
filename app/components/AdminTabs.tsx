@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Plus, LogOut } from 'lucide-react'
+import { Plus, LogOut, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase-browser'
 
 export default function AdminTabs({
@@ -18,7 +18,7 @@ export default function AdminTabs({
 
   async function handleSignOut() {
     await supabase.auth.signOut()
-    router.push('/login')
+    router.push('/')
   }
 
   return (
@@ -56,6 +56,14 @@ export default function AdminTabs({
             Create event
           </Link>
         )}
+
+        <Link
+          href="/"
+          className="text-sm text-gray-500 hover:text-msa-green transition flex items-center gap-1.5 pb-2.5 shrink-0"
+        >
+          <ExternalLink size={14} />
+          Sign up as volunteer
+        </Link>
 
         <button
           onClick={handleSignOut}

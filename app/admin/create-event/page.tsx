@@ -7,17 +7,21 @@ import { DayPicker } from 'react-day-picker'
 import { addDays, addWeeks, addMonths, addYears, format } from 'date-fns'
 import 'react-day-picker/dist/style.css'
 import AdminNav from '../../components/AdminNav'
+import ThemeToggle from '../../components/ThemeToggle'
 
 type RecurrenceType = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'annually' | 'custom'
 
 const PRESET_LOCATIONS = [
-  'HUB Prayer Room',
+  'Hub Prayer Room',
   "SUB (Students' Union Building)",
   'CAB (Central Academic Building)',
   'Myer Horowitz Theatre',
   'Quad',
   'Other (custom)',
 ]
+
+const inputClass =
+  'border rounded px-2 py-1 bg-white dark:bg-[#2A2A2D] dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500'
 
 export default function CreateEvent() {
   const [name, setName] = useState('')
@@ -114,66 +118,70 @@ export default function CreateEvent() {
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-background transition-colors relative">
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
+        <ThemeToggle />
+      </div>
+
       <AdminNav />
       <main className="p-8 max-w-2xl mx-auto">
         <div className="mb-6 text-center">
           <p className="text-msa-gold text-base sm:text-lg tracking-wide mb-2" style={{ fontFamily: 'serif' }}>
-  بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-</p>
-          <h1 className="text-2xl font-bold text-msa-green-dark">Create Event</h1>
+            بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+          </p>
+          <h1 className="text-2xl font-bold text-msa-green-dark dark:text-msa-cream">Create Event</h1>
         </div>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 bg-white rounded-xl p-6 shadow-sm border-t-4 border-msa-gold">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 bg-white dark:bg-[#2A2A2D] rounded-xl p-6 shadow-sm border-t-4 border-msa-gold transition-colors">
           <input
             placeholder="Event name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            className="border rounded px-2 py-1"
+            className={inputClass}
           />
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm block">Description</label>
+            <label className="text-sm block text-gray-700 dark:text-gray-300">Description</label>
             <div>
-              <label className="text-xs text-gray-600 block">What will volunteers be doing?</label>
+              <label className="text-xs text-gray-600 dark:text-gray-400 block">What will volunteers be doing?</label>
               <textarea
                 placeholder="e.g. Help set up chairs and prayer mats before Jummah"
                 value={task}
                 onChange={(e) => setTask(e.target.value)}
                 required
-                className="border rounded px-2 py-1 w-full text-sm"
+                className={`${inputClass} w-full text-sm`}
                 rows={2}
               />
             </div>
             <div>
-              <label className="text-xs text-gray-600 block">What should they bring? (optional)</label>
+              <label className="text-xs text-gray-600 dark:text-gray-400 block">What should they bring? (optional)</label>
               <input
                 placeholder="e.g. comfortable clothing"
                 value={whatToBring}
                 onChange={(e) => setWhatToBring(e.target.value)}
-                className="border rounded px-2 py-1 w-full text-sm"
+                className={`${inputClass} w-full text-sm`}
               />
             </div>
             <div>
-              <label className="text-xs text-gray-600 block">Anything else volunteers should know? (optional)</label>
+              <label className="text-xs text-gray-600 dark:text-gray-400 block">Anything else volunteers should know? (optional)</label>
               <textarea
                 placeholder="e.g. Please arrive 15 minutes early"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="border rounded px-2 py-1 w-full text-sm"
+                className={`${inputClass} w-full text-sm`}
                 rows={2}
               />
             </div>
-            {description && <p className="text-sm text-gray-500 italic">Preview: {description}</p>}
+            {description && <p className="text-sm text-gray-500 dark:text-gray-400 italic">Preview: {description}</p>}
           </div>
 
           <div>
-            <label className="text-sm block mb-1">Location</label>
+            <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">Location</label>
             <select
               value={locationChoice}
               onChange={(e) => setLocationChoice(e.target.value)}
               required
-              className="border rounded px-2 py-1 w-full"
+              className={`${inputClass} w-full`}
             >
               <option value="" disabled>Select a location</option>
               {PRESET_LOCATIONS.map((loc) => (
@@ -186,30 +194,33 @@ export default function CreateEvent() {
                 value={customLocation}
                 onChange={(e) => setCustomLocation(e.target.value)}
                 required
-                className="border rounded px-2 py-1 w-full mt-2"
+                className={`${inputClass} w-full mt-2`}
               />
             )}
           </div>
 
           <div>
-            <label className="text-sm block mb-1">Start date</label>
-            <DayPicker
-              mode="single"
-              selected={startDate}
-              onSelect={setStartDate}
-              disabled={{ before: new Date() }}
-              modifiers={{ recurring: generatedDates }}
-              modifiersStyles={{
-                recurring: { backgroundColor: '#1F7A5C', color: 'white' },
-              }}
-              style={
-                {
-                  ['--rdp-outline' as any]: '2px solid #1F7A5C',
-                  ['--rdp-outline-selected' as any]: '2px solid #1F7A5C',
-                  ['--rdp-animation-duration' as any]: '0s',
-                } as React.CSSProperties
-              }
-            />
+            <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">Start date</label>
+            <div className="bg-white dark:bg-[#242426] rounded-lg p-2 inline-block">
+              <DayPicker
+                mode="single"
+                selected={startDate}
+                onSelect={setStartDate}
+                disabled={{ before: new Date() }}
+                modifiers={{ recurring: generatedDates }}
+                modifiersStyles={{
+                  recurring: { backgroundColor: '#1F7A5C', color: 'white' },
+                }}
+                style={
+                  {
+                    ['--rdp-outline' as any]: '2px solid #1F7A5C',
+                    ['--rdp-outline-selected' as any]: '2px solid #1F7A5C',
+                    ['--rdp-animation-duration' as any]: '0s',
+                  } as React.CSSProperties
+                }
+                className="text-gray-900 dark:text-gray-100"
+              />
+            </div>
           </div>
 
           <input
@@ -218,7 +229,7 @@ export default function CreateEvent() {
             onChange={(e) => setTime(e.target.value)}
             min={minTime}
             required
-            className="border rounded px-2 py-1"
+            className={inputClass}
           />
           <input
             type="number"
@@ -226,15 +237,15 @@ export default function CreateEvent() {
             value={capacity}
             onChange={(e) => setCapacity(Number(e.target.value))}
             required
-            className="border rounded px-2 py-1"
+            className={inputClass}
           />
 
           <div>
-            <label className="text-sm block mb-1">Repeats</label>
+            <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">Repeats</label>
             <select
               value={recurrence}
               onChange={(e) => setRecurrence(e.target.value as RecurrenceType)}
-              className="border rounded px-2 py-1 w-full"
+              className={`${inputClass} w-full`}
             >
               <option value="none">Doesn't repeat</option>
               <option value="daily">Daily</option>
@@ -247,13 +258,13 @@ export default function CreateEvent() {
           </div>
 
           {recurrence === 'custom' && (
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
               Every
               <input
                 type="number"
                 value={customInterval}
                 onChange={(e) => setCustomInterval(Number(e.target.value))}
-                className="border rounded px-2 py-1 w-16"
+                className={`${inputClass} w-16`}
               />
               days
             </div>
@@ -261,18 +272,18 @@ export default function CreateEvent() {
 
           {recurrence !== 'none' && (
             <div>
-              <label className="text-sm block mb-1">Number of occurrences</label>
+              <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">Number of occurrences</label>
               <input
                 type="number"
                 value={occurrences}
                 onChange={(e) => setOccurrences(Number(e.target.value))}
-                className="border rounded px-2 py-1"
+                className={inputClass}
               />
             </div>
           )}
 
           {generatedDates.length > 0 && (
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               This will create {generatedDates.length} event{generatedDates.length > 1 ? 's' : ''} on:{' '}
               {generatedDates.map((d) => format(d, 'MMM d')).join(', ')}
             </p>
@@ -288,6 +299,6 @@ export default function CreateEvent() {
           {status === 'error' && <p className="text-red-500 text-sm">{errorMessage}</p>}
         </form>
       </main>
-    </>
+    </div>
   )
 }
