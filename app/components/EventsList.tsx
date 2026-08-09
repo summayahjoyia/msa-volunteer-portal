@@ -49,14 +49,15 @@ export default function EventsList({ events }: { events: any[] }) {
     return [...list].sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime())
   }, [events, pastSearch, pastSort])
 
-  function isEditable(eventDate: string) {
-    const cutoff = new Date(eventDate)
+  function isEditable(eventDate: string, eventEndDate: string | null) {
+    const baseDate = eventEndDate ? new Date(eventEndDate) : new Date(eventDate)
+    const cutoff = new Date(baseDate)
     cutoff.setHours(cutoff.getHours() + 24)
     return new Date() < cutoff
   }
 
   function renderEventCard(event: any) {
-    const editable = isEditable(event.event_date)
+    const editable = isEditable(event.event_date, event.event_end_date)
     return (
       <li key={event.id} className="bg-white dark:bg-[#2A2A2D] rounded-xl p-5 shadow-sm border-t-4 border-msa-gold transition-colors">
         <div className="flex justify-between items-start gap-3">

@@ -14,12 +14,14 @@ export default function DeleteEventButton({ eventId, seriesId }: { eventId: numb
     for (const id of ids) {
       const { data: event } = await supabase
         .from('events')
-        .select('name, event_date, signups(volunteers(email))')
+        .select('name, event_date, event_end_date, signups(volunteers(email))')
         .eq('id', id)
         .single()
 
       if (event) {
-        const isPastEvent = new Date(event.event_date) < new Date()
+        const referenceDate = event.event_end_date ? new Date(event.event_end_date) : new Date(event.event_date)
+        const isPastEvent = referenceDate < new Date()
+
         const emails = event.signups?.map((s: any) => s.volunteers?.email).filter(Boolean) || []
         if (emails.length > 0 && !isPastEvent) {
           await fetch('/api/send-cancellation', {

@@ -39,7 +39,8 @@ export default function EditEvent() {
     async function fetchEvent() {
       const { data } = await supabase.from('events').select('*').eq('id', eventId).single()
       if (data) {
-        const cutoff = new Date(data.event_date)
+        const baseDate = data.event_end_date ? new Date(data.event_end_date) : new Date(data.event_date)
+        const cutoff = new Date(baseDate)
         cutoff.setHours(cutoff.getHours() + 24)
         if (new Date() >= cutoff) {
           setLocked(true)
