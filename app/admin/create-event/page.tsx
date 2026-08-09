@@ -223,7 +223,7 @@ export default function CreateEvent() {
 
           <div>
             <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">Start date</label>
-            <div className="bg-white dark:bg-[#242426] rounded-lg p-2 inline-block">
+            <div className="w-full bg-white dark:bg-[#242426] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex justify-center">
               <DayPicker
                 mode="single"
                 selected={startDate}
@@ -268,14 +268,16 @@ export default function CreateEvent() {
             </div>
           </div>
 
-          <input
-            type="number"
-            placeholder="Volunteers needed"
-            value={capacity}
-            onChange={(e) => setCapacity(Number(e.target.value))}
-            required
-            className={inputClass}
-          />
+          <div>
+            <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">Volunteers needed</label>
+            <input
+              type="number"
+              value={capacity}
+              onChange={(e) => setCapacity(Number(e.target.value))}
+              required
+              className={`${inputClass} w-full`}
+            />
+          </div>
 
           <div>
             <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">Repeats</label>
