@@ -10,11 +10,13 @@ export default function EventSignUpButton({
   eventName,
   eventDate,
   location,
+  spotsOpen,
 }: {
   eventId: number
   eventName: string
   eventDate: string
   location: string
+  spotsOpen: number
 }) {
   const supabase = createClient()
   const router = useRouter()
@@ -58,6 +60,27 @@ export default function EventSignUpButton({
     loadVolunteer()
   }, [eventId, authLoading, user?.email])
 
+  async function syncCalendarAttendee(action: 'add' | 'remove', email: string) {
+    const { data: eventRow } = await supabase
+      .from('events')
+      .select('google_calendar_event_id')
+      .eq('id', eventId)
+      .single()
+
+    const calendarEventId = eventRow?.google_calendar_event_id
+    if (!calendarEventId) return
+
+    try {
+      await fetch(`/api/calendar/${action === 'add' ? 'add-attendee' : 'remove-attendee'}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ calendarEventId, email }),
+      })
+    } catch (err) {
+      console.error('Calendar attendee sync failed:', err)
+    }
+  }
+
   async function handleSignUp() {
     if (!volunteer) return
     setStatus('submitting')
@@ -88,12 +111,14 @@ export default function EventSignUpButton({
       }),
     })
 
+    await syncCalendarAttendee('add', volunteer.email)
+
     setStatus('signed_up')
     router.refresh()
   }
 
   async function handleCancel() {
-    if (!signupId) return
+    if (!signupId || !volunteer) return
     setStatus('submitting')
 
     const { error } = await supabase.from('signups').delete().eq('id', signupId)
@@ -104,6 +129,8 @@ export default function EventSignUpButton({
       return
     }
 
+    await syncCalendarAttendee('remove', volunteer.email)
+
     setSignupId(null)
     setStatus('cancelled')
     router.refresh()
@@ -112,6 +139,9 @@ export default function EventSignUpButton({
   if (authLoading || loading) return null
 
   if (!user || !volunteer) {
+    if (spotsOpen <= 0) {
+      return <p className="mt-3 text-sm text-gray-500 font-medium">This event is full.</p>
+    }
     return (
       <p className="mt-3 text-sm text-gray-500">Sign in to sign up for this event.</p>
     )
@@ -139,6 +169,9 @@ export default function EventSignUpButton({
   }
 
   if (status === 'cancelled') {
+    if (spotsOpen <= 0) {
+      return <p className="mt-2 text-sm text-gray-500 font-medium">This event is now full.</p>
+    }
     return (
       <div className="mt-2 text-sm">
         <p className="text-gray-500 dark:text-gray-400">You've cancelled your spot for this event.</p>
@@ -150,6 +183,10 @@ export default function EventSignUpButton({
         </button>
       </div>
     )
+  }
+
+  if (spotsOpen <= 0) {
+    return <p className="mt-3 text-sm text-gray-500 font-medium">This event is full.</p>
   }
 
   return (

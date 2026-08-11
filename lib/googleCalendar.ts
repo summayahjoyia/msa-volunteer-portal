@@ -98,3 +98,46 @@ export async function deleteCalendarEvent(calendarEventId: string) {
     }
   }
 }
+
+export async function addAttendeeToEvent(calendarEventId: string, email: string) {
+  const calendar = getCalendarClient()
+
+  const existing = await calendar.events.get({
+    calendarId: 'primary',
+    eventId: calendarEventId,
+  })
+
+  const currentAttendees = existing.data.attendees || []
+  const alreadyThere = currentAttendees.some((a) => a.email === email)
+  if (alreadyThere) return
+
+  await calendar.events.patch({
+    calendarId: 'primary',
+    eventId: calendarEventId,
+    sendUpdates: 'all',
+    requestBody: {
+      attendees: [...currentAttendees, { email }],
+    },
+  })
+}
+
+export async function removeAttendeeFromEvent(calendarEventId: string, email: string) {
+  const calendar = getCalendarClient()
+
+  const existing = await calendar.events.get({
+    calendarId: 'primary',
+    eventId: calendarEventId,
+  })
+
+  const currentAttendees = existing.data.attendees || []
+  const updatedAttendees = currentAttendees.filter((a) => a.email !== email)
+
+  await calendar.events.patch({
+    calendarId: 'primary',
+    eventId: calendarEventId,
+    sendUpdates: 'all',
+    requestBody: {
+      attendees: updatedAttendees,
+    },
+  })
+}
