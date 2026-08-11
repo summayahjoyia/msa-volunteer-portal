@@ -32,7 +32,7 @@ export default async function Home() {
   }
 
   return (
-    <main className="p-8 max-w-2xl mx-auto min-h-screen bg-background transition-colors">
+    <main className="p-8 max-w-3xl mx-auto min-h-screen bg-background transition-colors">
       <div className="mb-6 flex items-center gap-3">
         <ThemeToggle />
         <div className="flex-1 flex justify-end">
@@ -84,7 +84,7 @@ export default async function Home() {
                   <p>Spots open: {spotsOpen} of {event.v_capacity}</p>
                 </div>
 
-                <div className="border-t border-gray-100 dark:border-gray-700 mt-3 pt-3 min-h-[210px] flex flex-col justify-start">
+                <div className="border-t border-gray-100 dark:border-gray-700 mt-3 pt-3 min-h-[130px]">
                   <EventSignUpButton
                     eventId={event.id}
                     eventName={event.name}

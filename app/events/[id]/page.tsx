@@ -35,7 +35,7 @@ export default async function EventPage({
 
   if (error || !event) {
     return (
-      <main className="p-8 max-w-2xl mx-auto min-h-screen bg-background transition-colors text-center">
+      <main className="p-8 max-w-3xl mx-auto min-h-screen bg-background transition-colors text-center">
         <p className="text-gray-500 dark:text-gray-400">This event could not be found.</p>
         <Link href="/" className="text-msa-green underline text-sm mt-2 inline-block">
           Back to all events
@@ -48,7 +48,7 @@ export default async function EventPage({
   const spotsOpen = Math.max(event.v_capacity - signedUpCount, 0)
 
   return (
-    <main className="p-8 max-w-2xl mx-auto min-h-screen bg-background transition-colors">
+    <main className="p-8 max-w-3xl mx-auto min-h-screen bg-background transition-colors">
       <div className="mb-6 flex items-center gap-3">
         <ThemeToggle />
         <div className="flex-1 flex justify-end">
@@ -91,7 +91,7 @@ export default async function EventPage({
           <p>Spots open: {spotsOpen} of {event.v_capacity}</p>
         </div>
 
-        <div className="border-t border-gray-100 dark:border-gray-700 mt-4 pt-4 min-h-[160px]">
+        <div className="border-t border-gray-100 dark:border-gray-700 mt-4 pt-4 min-h-[130px]">
           <EventSignUpButton
             eventId={event.id}
             eventName={event.name}
