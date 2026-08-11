@@ -91,7 +91,7 @@ export default async function EventPage({
           <p>Spots open: {spotsOpen} of {event.v_capacity}</p>
         </div>
 
-        <div className="border-t border-gray-100 dark:border-gray-700 mt-4 pt-4 min-h-[110px]">
+        <div className="border-t border-gray-100 dark:border-gray-700 mt-4 pt-4 min-h-[160px]">
           <EventSignUpButton
             eventId={event.id}
             eventName={event.name}
