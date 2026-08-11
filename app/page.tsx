@@ -90,6 +90,7 @@ export default async function Home() {
                     eventName={event.name}
                     eventDate={event.event_date}
                     location={event.location}
+                    spotsOpen={spotsOpen}
                   />
                 </div>
               </li>
