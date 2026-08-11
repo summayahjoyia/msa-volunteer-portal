@@ -80,7 +80,7 @@ export default async function AdminVolunteerSignup() {
                     <p>Spots open: {spotsOpen} of {event.v_capacity}</p>
                   </div>
 
-                  <div className="border-t border-gray-100 dark:border-gray-700 mt-3 pt-3">
+                  <div className="border-t border-gray-100 dark:border-gray-700 mt-3 pt-3 min-h-[110px]">
                     <EventSignUpButton
                       eventId={event.id}
                       eventName={event.name}
