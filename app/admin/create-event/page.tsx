@@ -127,12 +127,43 @@ export default function CreateEvent() {
       }
     })
 
-    const { error } = await supabase.from('events').insert(rows)
+    const { data: insertedEvents, error } = await supabase
+      .from('events')
+      .insert(rows)
+      .select('id, name, description, location, event_date, event_end_date')
 
     if (error) {
       setStatus('error')
       setErrorMessage('Something went wrong — try again.')
       return
+    }
+
+    for (const ev of insertedEvents || []) {
+      try {
+        const res = await fetch('/api/calendar/create-event', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            summary: ev.name,
+            description: ev.description,
+            location: ev.location,
+            startDateTime: ev.event_date,
+            endDateTime:
+              ev.event_end_date ||
+              new Date(new Date(ev.event_date).getTime() + 60 * 60 * 1000).toISOString(),
+            attendeeEmails: [],
+          }),
+        })
+        const result = await res.json()
+        if (result.calendarEventId) {
+          await supabase
+            .from('events')
+            .update({ google_calendar_event_id: result.calendarEventId })
+            .eq('id', ev.id)
+        }
+      } catch (calendarError) {
+        console.error('Calendar sync failed:', calendarError)
+      }
     }
 
     setStatus('success')
