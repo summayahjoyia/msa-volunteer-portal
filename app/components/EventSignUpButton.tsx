@@ -87,6 +87,22 @@ export default function EventSignUpButton({
     if (!volunteer) return
     setStatus('submitting')
 
+    const { data: freshEvent } = await supabase
+      .from('events')
+      .select('v_capacity, signups(id)')
+      .eq('id', eventId)
+      .single()
+
+    const currentCount = freshEvent?.signups?.length || 0
+    const capacity = freshEvent?.v_capacity ?? 0
+
+    if (currentCount >= capacity) {
+      setStatus('error')
+      setErrorMessage('Sorry, this event just filled up.')
+      router.refresh()
+      return
+    }
+
     const { data: inserted, error: signupError } = await supabase
       .from('signups')
       .insert({ event_id: eventId, volunteer_id: volunteer.id, status: 'confirmed' })
@@ -95,7 +111,12 @@ export default function EventSignUpButton({
 
     if (signupError) {
       setStatus('error')
-      setErrorMessage("Something went wrong — you may have already signed up.")
+      if (signupError.message?.includes('EVENT_FULL')) {
+        setErrorMessage('Sorry, this event just filled up.')
+        router.refresh()
+      } else {
+        setErrorMessage("Something went wrong — you may have already signed up.")
+      }
       return
     }
 
