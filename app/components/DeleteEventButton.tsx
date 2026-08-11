@@ -14,7 +14,7 @@ export default function DeleteEventButton({ eventId, seriesId }: { eventId: numb
     for (const id of ids) {
       const { data: event } = await supabase
         .from('events')
-        .select('name, event_date, event_end_date, signups(volunteers(email))')
+        .select('name, event_date, event_end_date, google_calendar_event_id, signups(volunteers(email))')
         .eq('id', id)
         .single()
 
@@ -29,6 +29,18 @@ export default function DeleteEventButton({ eventId, seriesId }: { eventId: numb
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ emails, eventName: event.name, eventDate: event.event_date }),
           })
+        }
+
+        if (event.google_calendar_event_id) {
+          try {
+            await fetch('/api/calendar/delete-event', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ calendarEventId: event.google_calendar_event_id }),
+            })
+          } catch (err) {
+            console.error('Calendar delete sync failed:', err)
+          }
         }
       }
 
