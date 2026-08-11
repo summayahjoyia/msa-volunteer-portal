@@ -97,6 +97,7 @@ export default async function EventPage({
             eventName={event.name}
             eventDate={event.event_date}
             location={event.location}
+            spotsOpen={spotsOpen}
           />
         </div>
       </div>
