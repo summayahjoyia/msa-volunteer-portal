@@ -25,6 +25,9 @@ export default function EditEvent() {
   const [eventDate, setEventDate] = useState('')
   const [capacity, setCapacity] = useState(5)
 
+  const [calendarEventId, setCalendarEventId] = useState<string | null>(null)
+  const [durationMs, setDurationMs] = useState<number>(60 * 60 * 1000)
+
   const [original, setOriginal] = useState({
     name: '',
     description: '',
@@ -61,6 +64,13 @@ export default function EditEvent() {
         setEventDate(initial.eventDate)
         setCapacity(initial.capacity)
         setOriginal(initial)
+
+        setCalendarEventId(data.google_calendar_event_id || null)
+
+        if (data.event_end_date) {
+          const diff = new Date(data.event_end_date).getTime() - new Date(data.event_date).getTime()
+          if (diff > 0) setDurationMs(diff)
+        }
       }
       setLoading(false)
     }
@@ -71,14 +81,15 @@ export default function EditEvent() {
     e.preventDefault()
     setStatus('submitting')
 
+    const newStartDateTime = new Date(eventDate)
+
     const { error } = await supabase
       .from('events')
       .update({
         name,
         description,
         location,
-        event_date: new Date(eventDate).toISOString(),
-        v_capacity: capacity,
+        event_date: newStartDateTime.toISOString(),
       })
       .eq('id', eventId)
 
@@ -108,12 +119,32 @@ export default function EditEvent() {
         body: JSON.stringify({
           emails,
           eventName: name,
-          eventDate: new Date(eventDate).toISOString(),
+          eventDate: newStartDateTime.toISOString(),
           location,
           description,
           changedFields,
         }),
       })
+    }
+
+    if (calendarEventId) {
+      const newEndDateTime = new Date(newStartDateTime.getTime() + durationMs)
+      try {
+        await fetch('/api/calendar/update-event', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            calendarEventId,
+            summary: name,
+            description,
+            location,
+            startDateTime: newStartDateTime.toISOString(),
+            endDateTime: newEndDateTime.toISOString(),
+          }),
+        })
+      } catch (err) {
+        console.error('Calendar update sync failed:', err)
+      }
     }
 
     router.push('/admin')
