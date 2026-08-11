@@ -86,6 +86,7 @@ export default async function AdminVolunteerSignup() {
                       eventName={event.name}
                       eventDate={event.event_date}
                       location={event.location}
+                      spotsOpen={spotsOpen}
                     />
                   </div>
                 </li>
