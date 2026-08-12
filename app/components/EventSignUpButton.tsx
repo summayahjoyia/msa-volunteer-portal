@@ -122,18 +122,6 @@ export default function EventSignUpButton({
 
     setSignupId(inserted.id)
 
-    await fetch('/api/send-confirmation', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: volunteer.email,
-        name: volunteer.name,
-        eventName,
-        eventDate,
-        location,
-      }),
-    })
-
     await syncCalendarAttendee('add', volunteer.email)
 
     setStatus('signed_up')
@@ -172,7 +160,7 @@ export default function EventSignUpButton({
     return (
       <div className="mt-2 text-sm">
         <p className="text-msa-green-dark dark:text-msa-cream font-medium">
-          {status === 'already' ? "You're signed up for this event." : "You're signed up! Check your email for confirmation."}
+          You're signed up for this event. Check your email for a calendar invite.
         </p>
         {status === 'signed_up' && (
           <p className="text-msa-gold italic mt-1.5 text-[13px]">

@@ -3,22 +3,11 @@ import ProfilePill from './components/ProfilePill'
 import EventSignUpButton from './components/EventSignUpButton'
 import ThemeToggle from './components/ThemeToggle'
 import ShareEventButton from './components/ShareEventButton'
-import { format } from 'date-fns'
+import { formatEventDate, formatEventTime } from '@/lib/formatEventTime'
 import { Calendar, MapPin } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
-
-function formatEventDate(start: string) {
-  return format(new Date(start), 'EEEE, MMM d')
-}
-
-function formatEventTime(start: string, end: string | null) {
-  const startStr = format(new Date(start), 'h:mm a')
-  if (!end) return startStr
-  const endStr = format(new Date(end), 'h:mm a')
-  return `${startStr} – ${endStr}`
-}
 
 export default async function Home() {
   const { data: events, error } = await supabase
@@ -32,7 +21,7 @@ export default async function Home() {
   }
 
   return (
-    <main className="p-8 max-w-2xl mx-auto min-h-screen bg-background transition-colors">
+    <main className="p-8 max-w-3xl mx-auto min-h-screen bg-background transition-colors">
       <div className="mb-6 flex items-center gap-3">
         <ThemeToggle />
         <div className="flex-1 flex justify-end">
@@ -84,7 +73,7 @@ export default async function Home() {
                   <p>Spots open: {spotsOpen} of {event.v_capacity}</p>
                 </div>
 
-                <div className="border-t border-gray-100 dark:border-gray-700 mt-3 pt-3">
+                <div className="border-t border-gray-100 dark:border-gray-700 mt-3 pt-3 min-h-[130px]">
                   <EventSignUpButton
                     eventId={event.id}
                     eventName={event.name}

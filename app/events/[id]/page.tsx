@@ -3,22 +3,11 @@ import ProfilePill from '../../components/ProfilePill'
 import EventSignUpButton from '../../components/EventSignUpButton'
 import ThemeToggle from '../../components/ThemeToggle'
 import Link from 'next/link'
-import { format } from 'date-fns'
+import { formatEventDate, formatEventTime } from '@/lib/formatEventTime'
 import { Calendar, MapPin, ChevronLeft } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
-
-function formatEventDate(start: string) {
-  return format(new Date(start), 'EEEE, MMM d')
-}
-
-function formatEventTime(start: string, end: string | null) {
-  const startStr = format(new Date(start), 'h:mm a')
-  if (!end) return startStr
-  const endStr = format(new Date(end), 'h:mm a')
-  return `${startStr} – ${endStr}`
-}
 
 export default async function EventPage({
   params,
@@ -35,7 +24,7 @@ export default async function EventPage({
 
   if (error || !event) {
     return (
-      <main className="p-8 max-w-2xl mx-auto min-h-screen bg-background transition-colors text-center">
+      <main className="p-8 max-w-3xl mx-auto min-h-screen bg-background transition-colors text-center">
         <p className="text-gray-500 dark:text-gray-400">This event could not be found.</p>
         <Link href="/" className="text-msa-green underline text-sm mt-2 inline-block">
           Back to all events
@@ -48,7 +37,7 @@ export default async function EventPage({
   const spotsOpen = Math.max(event.v_capacity - signedUpCount, 0)
 
   return (
-    <main className="p-8 max-w-2xl mx-auto min-h-screen bg-background transition-colors">
+    <main className="p-8 max-w-3xl mx-auto min-h-screen bg-background transition-colors">
       <div className="mb-6 flex items-center gap-3">
         <ThemeToggle />
         <div className="flex-1 flex justify-end">
@@ -91,7 +80,7 @@ export default async function EventPage({
           <p>Spots open: {spotsOpen} of {event.v_capacity}</p>
         </div>
 
-        <div className="border-t border-gray-100 dark:border-gray-700 mt-4 pt-4">
+        <div className="border-t border-gray-100 dark:border-gray-700 mt-4 pt-4 min-h-[130px]">
           <EventSignUpButton
             eventId={event.id}
             eventName={event.name}

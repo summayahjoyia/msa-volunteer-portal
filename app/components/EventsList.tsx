@@ -3,24 +3,13 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Pencil, ArrowUpDown, Calendar, MapPin } from 'lucide-react'
-import { format } from 'date-fns'
+import { formatEventDate, formatEventTime } from '@/lib/formatEventTime'
 import MarkAttendanceButton from './MarkAttendanceButton'
 import BulkMessageForm from './BulkMessageForm'
 import DeleteEventButton from './DeleteEventButton'
 import ShareEventButton from './ShareEventButton'
 
 type SortMode = 'date' | 'alpha'
-
-function formatEventDate(start: string) {
-  return format(new Date(start), 'EEEE, MMM d')
-}
-
-function formatEventTime(start: string, end: string | null) {
-  const startStr = format(new Date(start), 'h:mm a')
-  if (!end) return startStr
-  const endStr = format(new Date(end), 'h:mm a')
-  return `${startStr} – ${endStr}`
-}
 
 export default function EventsList({ events }: { events: any[] }) {
   const [upcomingSort, setUpcomingSort] = useState<SortMode>('date')

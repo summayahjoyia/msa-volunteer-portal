@@ -1,19 +1,11 @@
 import { Resend } from 'resend'
 import { NextResponse } from 'next/server'
-import { format } from 'date-fns'
+import { formatEmailDateTime } from '@/lib/formatEventTime'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 const HIGHLIGHT_STYLE =
   'background-color: #FEF3C7; padding: 2px 6px; border-radius: 4px; font-weight: 600;'
-
-function formatEmailDateTime(dateStr: string) {
-  const date = new Date(dateStr)
-  return {
-    dateLine: format(date, 'EEEE, MMMM d, yyyy'),
-    timeLine: format(date, 'h:mm a'),
-  }
-}
 
 export async function POST(request: Request) {
   const { emails, eventName, eventDate, location, description, changedFields = [] } =
