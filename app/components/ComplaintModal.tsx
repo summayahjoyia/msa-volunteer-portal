@@ -2,11 +2,16 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from './AuthProvider'
-import { MessageSquarePlus, X } from 'lucide-react'
+import { X } from 'lucide-react'
 
-export default function ComplaintBox() {
+export default function ComplaintModal({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean
+  onClose: () => void
+}) {
   const { user } = useAuth()
-  const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [name, setName] = useState('')
@@ -44,23 +49,13 @@ export default function ComplaintBox() {
     }
   }
 
-  if (!open) {
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 flex items-center gap-2 bg-msa-green text-white rounded-full px-4 py-2.5 shadow-lg hover:bg-msa-green-dark transition text-sm z-40"
-      >
-        <MessageSquarePlus size={16} />
-        Feedback
-      </button>
-    )
-  }
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-[#2A2A2D] rounded-xl p-5 w-full max-w-sm shadow-lg relative">
         <button
-          onClick={() => setOpen(false)}
+          onClick={onClose}
           className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
         >
           <X size={18} />
