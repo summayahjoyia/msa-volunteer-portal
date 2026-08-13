@@ -73,7 +73,7 @@ export default async function Home() {
                   <p>Spots open: {spotsOpen} of {event.v_capacity}</p>
                 </div>
 
-                <div className="border-t border-gray-100 dark:border-gray-700 mt-2 pt-2 min-h-[100px]">
+                <div className="border-t border-gray-100 dark:border-gray-700 mt-2 pt-2 min-h-[150px] sm:min-h-[120px]">
                   <EventSignUpButton
                     eventId={event.id}
                     eventName={event.name}
