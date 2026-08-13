@@ -6,6 +6,7 @@ import { useAuth } from './AuthProvider'
 import { ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import GoogleSignInButton from './GoogleSignInButton'
+import ComplaintModal from './ComplaintModal'
 
 function getInitials(nameOrEmail: string) {
   const parts = nameOrEmail.trim().split(/\s+/)
@@ -18,6 +19,7 @@ function getInitials(nameOrEmail: string) {
 export default function ProfilePill() {
   const { user, loading } = useAuth()
   const [open, setOpen] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
@@ -45,37 +47,50 @@ export default function ProfilePill() {
   const initials = getInitials(user.name || user.email)
 
   return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 bg-white dark:bg-[#2A2A2D] rounded-full pl-1.5 pr-2.5 py-1.5 shadow-sm transition"
-      >
-        <div className="w-6 h-6 rounded-full bg-msa-gold flex items-center justify-center text-xs font-bold" style={{ color: '#0B3D2E' }}>
-          {initials}
-        </div>
-        <ChevronDown size={14} className="text-gray-400" />
-      </button>
-
-      {open && (
-        <div className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] bg-white dark:bg-[#2A2A2D] rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-50">
-          <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 truncate">
-            {user.name || user.email}
+    <>
+      <div className="relative" ref={ref}>
+        <button
+          onClick={() => setOpen(!open)}
+          className="flex items-center gap-1.5 bg-white dark:bg-[#2A2A2D] rounded-full pl-1.5 pr-2.5 py-1.5 shadow-sm transition"
+        >
+          <div className="w-6 h-6 rounded-full bg-msa-gold flex items-center justify-center text-xs font-bold" style={{ color: '#0B3D2E' }}>
+            {initials}
           </div>
-          <Link
-            href="/my-events"
-            className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#333336]"
-            onClick={() => setOpen(false)}
-          >
-            My Events
-          </Link>
-          <button
-            onClick={handleSignOut}
-            className="w-full text-left px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-gray-50 dark:hover:bg-[#333336]"
-          >
-            Sign out
-          </button>
-        </div>
-      )}
-    </div>
+          <ChevronDown size={14} className="text-gray-400" />
+        </button>
+
+        {open && (
+          <div className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] bg-white dark:bg-[#2A2A2D] rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-50">
+            <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 truncate">
+              {user.name || user.email}
+            </div>
+            <Link
+              href="/my-events"
+              className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#333336]"
+              onClick={() => setOpen(false)}
+            >
+              My Events
+            </Link>
+            <button
+              onClick={() => {
+                setOpen(false)
+                setFeedbackOpen(true)
+              }}
+              className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#333336]"
+            >
+              Feedback
+            </button>
+            <button
+              onClick={handleSignOut}
+              className="w-full text-left px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-gray-50 dark:hover:bg-[#333336]"
+            >
+              Sign out
+            </button>
+          </div>
+        )}
+      </div>
+
+      <ComplaintModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+    </>
   )
 }
