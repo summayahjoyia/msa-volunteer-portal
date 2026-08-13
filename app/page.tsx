@@ -21,7 +21,7 @@ export default async function Home() {
   }
 
   return (
-    <main className="p-8 max-w-3xl mx-auto min-h-screen bg-background transition-colors">
+    <main className="p-8 max-w-2xl mx-auto min-h-screen bg-background transition-colors">
       <div className="mb-6 flex items-center gap-3">
         <ThemeToggle />
         <div className="flex-1 flex justify-end">
