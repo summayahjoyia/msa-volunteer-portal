@@ -13,8 +13,6 @@ type EventSignUpButtonProps = {
   spotsOpen: number
 }
 
-type Status = 'idle' | 'signed_up' | 'already' | 'cancelled'
-
 export default function EventSignUpButton({
   eventId,
   eventName,
@@ -29,8 +27,7 @@ export default function EventSignUpButton({
   const [loading, setLoading] = useState(true)
   const [volunteer, setVolunteer] = useState<{ id: number; name: string; email: string } | null>(null)
   const [signupId, setSignupId] = useState<number | null>(null)
-  const [status, setStatus] = useState<Status>('idle')
-  const [pending, setPending] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'signed_up' | 'already' | 'cancelled' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
@@ -88,8 +85,7 @@ export default function EventSignUpButton({
 
   async function handleSignUp() {
     if (!volunteer) return
-    setPending(true)
-    setErrorMessage('')
+    setStatus('submitting')
 
     const { data: freshEvent } = await supabase
       .from('events')
@@ -101,7 +97,7 @@ export default function EventSignUpButton({
     const capacity = freshEvent?.v_capacity ?? 0
 
     if (currentCount >= capacity) {
-      setPending(false)
+      setStatus('error')
       setErrorMessage('Sorry, this event just filled up.')
       router.refresh()
       return
@@ -114,12 +110,12 @@ export default function EventSignUpButton({
       .single()
 
     if (signupError) {
-      setPending(false)
+      setStatus('error')
       if (signupError.message?.includes('EVENT_FULL')) {
         setErrorMessage('Sorry, this event just filled up.')
         router.refresh()
       } else {
-        setErrorMessage('Something went wrong. You may have already signed up.')
+        setErrorMessage("Something went wrong — you may have already signed up.")
       }
       return
     }
@@ -129,20 +125,18 @@ export default function EventSignUpButton({
     await syncCalendarAttendee('add', volunteer.email)
 
     setStatus('signed_up')
-    setPending(false)
     router.refresh()
   }
 
   async function handleCancel() {
     if (!signupId || !volunteer) return
-    setPending(true)
-    setErrorMessage('')
+    setStatus('submitting')
 
     const { error } = await supabase.from('signups').delete().eq('id', signupId)
 
     if (error) {
-      setPending(false)
-      setErrorMessage('Something went wrong cancelling your spot. Try again.')
+      setStatus('error')
+      setErrorMessage('Something went wrong cancelling your spot — try again.')
       return
     }
 
@@ -150,103 +144,70 @@ export default function EventSignUpButton({
 
     setSignupId(null)
     setStatus('cancelled')
-    setPending(false)
     router.refresh()
   }
 
-  const ready = !authLoading && !loading
-  const isSignedUp = status === 'signed_up' || status === 'already'
-  const isFull = spotsOpen <= 0
+  if (authLoading || loading) return null
 
-  // One message slot, filled differently per state. Empty string keeps the slot
-  // reserved but blank.
-  let message = ''
-  if (ready) {
-    if (isSignedUp) {
-      message = "You're signed up for this event. Check your email for a calendar invite."
-    } else if (!user || !volunteer) {
-      message = isFull ? 'This event is full.' : 'Sign in to sign up for this event.'
-    } else if (isFull) {
-      message = status === 'cancelled' ? 'This event is now full.' : 'This event is full.'
-    } else if (status === 'cancelled') {
-      message = "You've cancelled your spot for this event."
+  if (!user || !volunteer) {
+    if (spotsOpen <= 0) {
+      return <p className="mt-3 text-sm text-gray-500 font-medium">This event is full.</p>
     }
+    return <p className="mt-3 text-sm text-gray-500">Sign in to sign up for this event.</p>
   }
 
-  const messageIsStrong = isSignedUp || isFull
-
-  // One button slot. When there's no action available the button still renders,
-  // invisible, so it keeps holding its space.
-  let action:
-    | { label: string; pendingLabel: string; onClick: () => void; variant: 'primary' | 'ghost' }
-    | null = null
-
-  if (ready && user && volunteer) {
-    if (isSignedUp) {
-      action = {
-        label: "Can't make it",
-        pendingLabel: 'Cancelling',
-        onClick: handleCancel,
-        variant: 'ghost',
-      }
-    } else if (!isFull) {
-      action = {
-        label: status === 'cancelled' ? 'Sign Up Again' : 'Sign Up',
-        pendingLabel: 'Signing up',
-        onClick: handleSignUp,
-        variant: 'primary',
-      }
-    }
+  if (status === 'signed_up' || status === 'already') {
+    return (
+      <div className="mt-2 text-sm">
+        <p className="text-msa-green-dark dark:text-msa-cream font-medium">
+          You're signed up for this event. Check your email for a calendar invite.
+        </p>
+        {status === 'signed_up' && (
+          <p className="text-msa-gold italic mt-1.5 text-[13px]">
+            JazakAllah Khair — may Allah reward you for stepping up to serve your community.
+          </p>
+        )}
+        <button
+          onClick={handleCancel}
+          className="mt-3 border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 text-xs px-3 py-1.5 rounded-lg hover:border-red-300 hover:text-red-500 transition"
+        >
+          Can't make it
+        </button>
+      </div>
+    )
   }
 
-  const buttonBase =
-    'rounded-lg px-3 py-1.5 min-w-[7.5rem] transition disabled:opacity-60 disabled:cursor-not-allowed'
-  const buttonVariant =
-    action?.variant === 'ghost'
-      ? 'border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 text-xs hover:border-red-300 hover:text-red-500'
-      : 'bg-msa-green text-white text-sm hover:bg-msa-green-dark'
+  if (status === 'cancelled') {
+    if (spotsOpen <= 0) {
+      return <p className="mt-2 text-sm text-gray-500 font-medium">This event is now full.</p>
+    }
+    return (
+      <div className="mt-2 text-sm">
+        <p className="text-gray-500 dark:text-gray-400">You've cancelled your spot for this event.</p>
+        <button
+          onClick={handleSignUp}
+          className="mt-2 bg-msa-green text-white rounded-lg px-3 py-1.5 text-sm hover:bg-msa-green-dark transition"
+        >
+          Sign Up Again
+        </button>
+      </div>
+    )
+  }
+
+  if (spotsOpen <= 0) {
+    return <p className="mt-3 text-sm text-gray-500 font-medium">This event is full.</p>
+  }
 
   return (
-    <div className="mt-2 text-sm">
-      {/* Message slot: two lines reserved so a one-line and a two-line message
-          take up the same room. */}
-      <p
-        aria-live="polite"
-        className={`min-h-[2.5rem] ${
-          messageIsStrong
-            ? 'text-msa-green-dark dark:text-msa-cream font-medium'
-            : 'text-gray-500 dark:text-gray-400'
-        }`}
-      >
-        {message}
-      </p>
-
-      {/* Du'a slot: always rendered so it holds its height in every state,
-          including when it wraps on narrow screens. */}
-      <p
-        aria-hidden={status !== 'signed_up'}
-        className={`text-msa-gold italic mt-1.5 text-[13px] ${
-          status === 'signed_up' ? '' : 'invisible'
-        }`}
-      >
-        JazakAllah Khair — may Allah reward you for stepping up to serve your community.
-      </p>
-
-      {/* Button slot: always rendered, hidden when there's nothing to do. */}
+    <div className="mt-3">
       <button
-        onClick={action?.onClick}
-        disabled={!action || pending}
-        aria-hidden={!action}
-        tabIndex={action ? undefined : -1}
-        className={`mt-3 ${buttonBase} ${buttonVariant} ${
-          action ? '' : 'invisible pointer-events-none'
-        }`}
+        onClick={handleSignUp}
+        disabled={status === 'submitting'}
+        className="bg-msa-green text-white rounded-lg px-3 py-1.5 text-sm hover:bg-msa-green-dark transition"
       >
-        {action ? (pending ? action.pendingLabel : action.label) : 'Sign Up'}
+        {status === 'submitting' ? '...' : 'Sign Up'}
       </button>
-
-      {/* Error slot: one line reserved so an error doesn't push the card taller. */}
-      <p className="text-red-500 text-sm mt-1 min-h-[1.25rem]">{errorMessage}</p>
+      {status === 'error' && <p className="text-red-500 text-sm mt-1">{errorMessage}</p>}
     </div>
   )
 }
