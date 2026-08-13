@@ -40,9 +40,9 @@ export async function POST(request: Request) {
     body,
     '',
     '---',
-    `**Submitted by:** ${name ? name : 'Anonymous'}`,
+    name ? `**Submitted by:** ${name}` : null,
     `**Contact:** ${normalizedEmail}`,
-  ].join('\n')
+  ].filter(Boolean).join('\n')
 
   try {
     const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues`, {
