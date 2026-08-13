@@ -36,12 +36,13 @@ export async function POST(request: Request) {
   const token = process.env.GITHUB_TOKEN
 
   const issueBody = [
+    '## Description',
     body,
     '',
     '---',
-    name ? `Submitted by: ${name}` : 'Submitted anonymously',
-    `Contact: ${normalizedEmail}`,
-  ].filter(Boolean).join('\n')
+    `**Submitted by:** ${name ? name : 'Anonymous'}`,
+    `**Contact:** ${normalizedEmail}`,
+  ].join('\n')
 
   try {
     const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues`, {

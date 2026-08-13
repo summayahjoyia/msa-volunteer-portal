@@ -1,15 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useAuth } from './AuthProvider'
 import { MessageSquarePlus, X } from 'lucide-react'
 
 export default function ComplaintBox() {
+  const { user } = useAuth()
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error' | 'limit'>('idle')
+
+  useEffect(() => {
+    if (user?.email) setEmail(user.email)
+    if (user?.name) setName(user.name)
+  }, [user])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -27,8 +34,6 @@ export default function ComplaintBox() {
         setStatus('success')
         setTitle('')
         setBody('')
-        setName('')
-        setEmail('')
       } else if (result.error === 'LIMIT_REACHED') {
         setStatus('limit')
       } else {
@@ -90,20 +95,30 @@ export default function ComplaintBox() {
               rows={4}
               className="border rounded px-2 py-1.5 text-sm bg-white dark:bg-[#1F1F21] dark:border-gray-700 dark:text-gray-100"
             />
-            <input
-              placeholder="Your name (optional)"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="border rounded px-2 py-1.5 text-sm bg-white dark:bg-[#1F1F21] dark:border-gray-700 dark:text-gray-100"
-            />
-            <input
-              type="email"
-              placeholder="Your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="border rounded px-2 py-1.5 text-sm bg-white dark:bg-[#1F1F21] dark:border-gray-700 dark:text-gray-100"
-            />
+
+            {user ? (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Submitting as <span className="font-medium">{name || email}</span>
+              </p>
+            ) : (
+              <>
+                <input
+                  placeholder="Your name (optional)"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="border rounded px-2 py-1.5 text-sm bg-white dark:bg-[#1F1F21] dark:border-gray-700 dark:text-gray-100"
+                />
+                <input
+                  type="email"
+                  placeholder="Your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="border rounded px-2 py-1.5 text-sm bg-white dark:bg-[#1F1F21] dark:border-gray-700 dark:text-gray-100"
+                />
+              </>
+            )}
+
             <button
               type="submit"
               disabled={status === 'submitting'}
