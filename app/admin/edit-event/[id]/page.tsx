@@ -23,20 +23,22 @@ export default function EditEvent() {
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
   const [eventDate, setEventDate] = useState('')
+  const [endTime, setEndTime] = useState('')
   const [capacity, setCapacity] = useState(5)
 
   const [calendarEventId, setCalendarEventId] = useState<string | null>(null)
-  const [durationMs, setDurationMs] = useState<number>(60 * 60 * 1000)
 
   const [original, setOriginal] = useState({
     name: '',
     description: '',
     location: '',
     eventDate: '',
+    endTime: '',
     capacity: 5,
   })
 
   const [status, setStatus] = useState<'idle' | 'submitting' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
     async function fetchEvent() {
@@ -51,26 +53,27 @@ export default function EditEvent() {
           return
         }
 
+        const initialEndTime = data.event_end_date
+          ? new Date(data.event_end_date).toTimeString().slice(0, 5)
+          : ''
+
         const initial = {
           name: data.name,
           description: data.description || '',
           location: data.location || '',
           eventDate: data.event_date?.slice(0, 16) || '',
+          endTime: initialEndTime,
           capacity: data.v_capacity,
         }
         setName(initial.name)
         setDescription(initial.description)
         setLocation(initial.location)
         setEventDate(initial.eventDate)
+        setEndTime(initial.endTime)
         setCapacity(initial.capacity)
         setOriginal(initial)
 
         setCalendarEventId(data.google_calendar_event_id || null)
-
-        if (data.event_end_date) {
-          const diff = new Date(data.event_end_date).getTime() - new Date(data.event_date).getTime()
-          if (diff > 0) setDurationMs(diff)
-        }
       }
       setLoading(false)
     }
@@ -79,9 +82,24 @@ export default function EditEvent() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setStatus('submitting')
 
     const newStartDateTime = new Date(eventDate)
+    let newEndDateTime: Date | null = null
+
+    if (endTime) {
+      const [endHours, endMinutes] = endTime.split(':').map(Number)
+      newEndDateTime = new Date(eventDate)
+      newEndDateTime.setHours(endHours, endMinutes)
+
+      if (newEndDateTime <= newStartDateTime) {
+        setStatus('error')
+        setErrorMessage('End time must be after the start time.')
+        return
+      }
+    }
+
+    setStatus('submitting')
+    setErrorMessage('')
 
     const { error } = await supabase
       .from('events')
@@ -90,11 +108,13 @@ export default function EditEvent() {
         description,
         location,
         event_date: newStartDateTime.toISOString(),
+        event_end_date: newEndDateTime ? newEndDateTime.toISOString() : null,
       })
       .eq('id', eventId)
 
     if (error) {
       setStatus('error')
+      setErrorMessage('Something went wrong — try again.')
       return
     }
 
@@ -107,7 +127,7 @@ export default function EditEvent() {
 
     const changedFields: string[] = []
     if (location !== original.location) changedFields.push('location')
-    if (eventDate !== original.eventDate) changedFields.push('date')
+    if (eventDate !== original.eventDate || endTime !== original.endTime) changedFields.push('date')
     if (description !== original.description) changedFields.push('description')
     if (name !== original.name) changedFields.push('name')
     if (capacity !== original.capacity) changedFields.push('capacity')
@@ -128,7 +148,7 @@ export default function EditEvent() {
     }
 
     if (calendarEventId) {
-      const newEndDateTime = new Date(newStartDateTime.getTime() + durationMs)
+      const fallbackEnd = new Date(newStartDateTime.getTime() + 60 * 60 * 1000)
       try {
         await fetch('/api/calendar/update-event', {
           method: 'POST',
@@ -139,7 +159,7 @@ export default function EditEvent() {
             description,
             location,
             startDateTime: newStartDateTime.toISOString(),
-            endDateTime: newEndDateTime.toISOString(),
+            endDateTime: (newEndDateTime || fallbackEnd).toISOString(),
           }),
         })
       } catch (err) {
@@ -210,12 +230,22 @@ export default function EditEvent() {
           </div>
 
           <div>
-            <label className={labelClass}>Date &amp; time</label>
+            <label className={labelClass}>Date &amp; start time</label>
             <input
               type="datetime-local"
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
               required
+              className={`${inputClass} w-full`}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>End time (optional)</label>
+            <input
+              type="time"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
               className={`${inputClass} w-full`}
             />
           </div>
@@ -238,7 +268,7 @@ export default function EditEvent() {
           >
             {status === 'submitting' ? 'Saving...' : 'Save Changes'}
           </button>
-          {status === 'error' && <p className="text-red-500 text-sm">Something went wrong — try again.</p>}
+          {status === 'error' && <p className="text-red-500 text-sm">{errorMessage}</p>}
         </form>
       </main>
     </div>

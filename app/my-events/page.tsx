@@ -7,11 +7,12 @@ import ThemeToggle from '../components/ThemeToggle'
 import ProfilePill from '../components/ProfilePill'
 import Link from 'next/link'
 import { ChevronLeft, Calendar, MapPin } from 'lucide-react'
-import { format } from 'date-fns'
+import { formatEventDate, formatEventTime } from '@/lib/formatEventTime'
 
 type SignupRow = {
+  id: number
   status: string
-  events: { id: number; name: string; location: string; event_date: string } | null
+  events: { id: number; name: string; location: string; event_date: string; event_end_date: string | null; google_calendar_event_id: string | null } | null
 }
 
 export default function MyEvents() {
@@ -19,6 +20,7 @@ export default function MyEvents() {
   const { user, loading: authLoading } = useAuth()
   const [loading, setLoading] = useState(true)
   const [rows, setRows] = useState<SignupRow[]>([])
+  const [cancellingId, setCancellingId] = useState<number | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -37,7 +39,7 @@ export default function MyEvents() {
       if (volunteer) {
         const { data } = await supabase
           .from('signups')
-          .select('status, events(id, name, location, event_date)')
+          .select('id, status, events(id, name, location, event_date, event_end_date, google_calendar_event_id)')
           .eq('volunteer_id', volunteer.id)
         setRows((data as any) || [])
       }
@@ -45,6 +47,29 @@ export default function MyEvents() {
     }
     load()
   }, [authLoading, user?.email])
+
+  async function handleCancel(signupId: number, calendarEventId: string | null) {
+    if (!user?.email) return
+    setCancellingId(signupId)
+
+    const { error } = await supabase.from('signups').delete().eq('id', signupId)
+
+    if (!error) {
+      if (calendarEventId) {
+        try {
+          await fetch('/api/calendar/remove-attendee', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ calendarEventId, email: user.email }),
+          })
+        } catch (err) {
+          console.error('Calendar attendee sync failed:', err)
+        }
+      }
+      setRows((prev) => prev.filter((r) => r.id !== signupId))
+    }
+    setCancellingId(null)
+  }
 
   const now = new Date()
   const upcoming = rows
@@ -94,22 +119,31 @@ export default function MyEvents() {
           </h2>
           {upcoming.length > 0 ? (
             <ul className="space-y-3 mb-8">
-              {upcoming.map((r, i) => (
+              {upcoming.map((r) => (
                 <li
-                  key={i}
+                  key={r.id}
                   className="bg-white dark:bg-[#2A2A2D] rounded-xl p-4 shadow-sm border-t-4 border-msa-gold"
                 >
                   <h3 className="font-semibold text-msa-green-dark dark:text-msa-cream">{r.events?.name}</h3>
                   <div className="mt-1.5 space-y-0.5 text-sm text-gray-500 dark:text-gray-400">
                     <div className="flex items-center gap-1.5">
                       <Calendar size={13} />
-                      <span>{format(new Date(r.events!.event_date), "EEEE, MMM d 'at' h:mm a")}</span>
+                      <span>
+                        {formatEventDate(r.events!.event_date)}, {formatEventTime(r.events!.event_date, r.events!.event_end_date)}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <MapPin size={13} />
                       <span>{r.events?.location || 'Location TBD'}</span>
                     </div>
                   </div>
+                  <button
+                    onClick={() => handleCancel(r.id, r.events?.google_calendar_event_id || null)}
+                    disabled={cancellingId === r.id}
+                    className="mt-3 border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 text-xs px-3 py-1.5 rounded-lg hover:border-red-300 hover:text-red-500 transition disabled:opacity-50"
+                  >
+                    {cancellingId === r.id ? '...' : "Can't make it"}
+                  </button>
                 </li>
               ))}
             </ul>
@@ -122,9 +156,9 @@ export default function MyEvents() {
           </h2>
           {past.length > 0 ? (
             <ul className="space-y-3">
-              {past.map((r, i) => (
+              {past.map((r) => (
                 <li
-                  key={i}
+                  key={r.id}
                   className="bg-white dark:bg-[#2A2A2D] rounded-xl p-4 shadow-sm border-t-4 border-gray-200 dark:border-gray-700"
                 >
                   <div className="flex justify-between items-start gap-3">
@@ -144,7 +178,7 @@ export default function MyEvents() {
                   <div className="mt-1.5 space-y-0.5 text-sm text-gray-500 dark:text-gray-400">
                     <div className="flex items-center gap-1.5">
                       <Calendar size={13} />
-                      <span>{format(new Date(r.events!.event_date), "MMM d, yyyy")}</span>
+                      <span>{formatEventDate(r.events!.event_date)}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <MapPin size={13} />
