@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter, useParams } from 'next/navigation'
+import { DayPicker } from 'react-day-picker'
+import 'react-day-picker/dist/style.css'
 import ThemeToggle from '../../../components/ThemeToggle'
 import AdminNav from '../../../components/AdminNav'
 
@@ -22,7 +24,8 @@ export default function EditEvent() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
-  const [eventDate, setEventDate] = useState('')
+  const [eventDay, setEventDay] = useState<Date | undefined>(undefined)
+  const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
   const [capacity, setCapacity] = useState(5)
 
@@ -32,7 +35,8 @@ export default function EditEvent() {
     name: '',
     description: '',
     location: '',
-    eventDate: '',
+    eventDay: '',
+    startTime: '',
     endTime: '',
     capacity: 5,
   })
@@ -53,6 +57,8 @@ export default function EditEvent() {
           return
         }
 
+        const startDateObj = new Date(data.event_date)
+        const initialStartTime = startDateObj.toTimeString().slice(0, 5)
         const initialEndTime = data.event_end_date
           ? new Date(data.event_end_date).toTimeString().slice(0, 5)
           : ''
@@ -61,14 +67,16 @@ export default function EditEvent() {
           name: data.name,
           description: data.description || '',
           location: data.location || '',
-          eventDate: data.event_date?.slice(0, 16) || '',
+          eventDay: startDateObj.toDateString(),
+          startTime: initialStartTime,
           endTime: initialEndTime,
           capacity: data.v_capacity,
         }
         setName(initial.name)
         setDescription(initial.description)
         setLocation(initial.location)
-        setEventDate(initial.eventDate)
+        setEventDay(startDateObj)
+        setStartTime(initial.startTime)
         setEndTime(initial.endTime)
         setCapacity(initial.capacity)
         setOriginal(initial)
@@ -82,13 +90,16 @@ export default function EditEvent() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!eventDay) return
 
-    const newStartDateTime = new Date(eventDate)
+    const [startHours, startMinutes] = startTime.split(':').map(Number)
+    const newStartDateTime = new Date(eventDay)
+    newStartDateTime.setHours(startHours, startMinutes)
+
     let newEndDateTime: Date | null = null
-
     if (endTime) {
       const [endHours, endMinutes] = endTime.split(':').map(Number)
-      newEndDateTime = new Date(eventDate)
+      newEndDateTime = new Date(eventDay)
       newEndDateTime.setHours(endHours, endMinutes)
 
       if (newEndDateTime <= newStartDateTime) {
@@ -127,7 +138,13 @@ export default function EditEvent() {
 
     const changedFields: string[] = []
     if (location !== original.location) changedFields.push('location')
-    if (eventDate !== original.eventDate || endTime !== original.endTime) changedFields.push('date')
+    if (
+      eventDay.toDateString() !== original.eventDay ||
+      startTime !== original.startTime ||
+      endTime !== original.endTime
+    ) {
+      changedFields.push('date')
+    }
     if (description !== original.description) changedFields.push('description')
     if (name !== original.name) changedFields.push('name')
     if (capacity !== original.capacity) changedFields.push('capacity')
@@ -230,24 +247,45 @@ export default function EditEvent() {
           </div>
 
           <div>
-            <label className={labelClass}>Date &amp; start time</label>
-            <input
-              type="datetime-local"
-              value={eventDate}
-              onChange={(e) => setEventDate(e.target.value)}
-              required
-              className={`${inputClass} w-full`}
-            />
+            <label className={labelClass}>Date</label>
+            <div className="flex justify-center">
+              <DayPicker
+                mode="single"
+                selected={eventDay}
+                onSelect={setEventDay}
+                disabled={{ before: new Date() }}
+                style={
+                  {
+                    ['--rdp-outline' as any]: '2px solid #1F7A5C',
+                    ['--rdp-outline-selected' as any]: '2px solid #1F7A5C',
+                    ['--rdp-animation-duration' as any]: '0s',
+                  } as React.CSSProperties
+                }
+                className="text-gray-900 dark:text-gray-100"
+              />
+            </div>
           </div>
 
-          <div>
-            <label className={labelClass}>End time (optional)</label>
-            <input
-              type="time"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              className={`${inputClass} w-full`}
-            />
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <label className={labelClass}>Start time</label>
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                required
+                className={`${inputClass} w-full`}
+              />
+            </div>
+            <div className="flex-1">
+              <label className={labelClass}>End time (optional)</label>
+              <input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className={`${inputClass} w-full`}
+              />
+            </div>
           </div>
 
           <div>
@@ -263,7 +301,7 @@ export default function EditEvent() {
 
           <button
             type="submit"
-            disabled={status === 'submitting'}
+            disabled={status === 'submitting' || !eventDay}
             className="bg-msa-green text-white rounded-lg px-3 py-1.5 hover:bg-msa-green-dark transition mt-2"
           >
             {status === 'submitting' ? 'Saving...' : 'Save Changes'}
