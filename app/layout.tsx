@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "./components/AuthProvider";
+import ComplaintBox from "./components/ComplaintBox";
 
 const poppins = Poppins({
   variable: "--font-poppins",
