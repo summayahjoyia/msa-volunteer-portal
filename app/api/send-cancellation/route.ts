@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       to: emails,
       subject: `Cancelled: ${eventName}`,
       html: `
-        <p>Assalamu alaikum,</p>
+        <p>Assalam Alaikum,</p>
         <p><strong>${eventName}</strong> has been cancelled. It was originally scheduled for:</p>
         <p>
           📅 ${dateLine}<br/>
