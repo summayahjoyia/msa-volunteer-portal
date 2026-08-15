@@ -17,24 +17,3 @@ Chosen to stay consistent with other MSA Digital Solutions projects (the iftar p
 ## Status
 
 🚧 Early development — see [Issues](../../issues) for planned features and progress.
-
-## Roadmap
-
-**V1** 
-- Mobile-first UI
-- Event postings
-- One-click sign-up
-- Recurring events
-- Admin dashboard
-- Multi-exec admin access
-- Track prior volunteer involvement
-- Bulk messaging/email
-
-**V2**
-- Volunteer interest tags
-- Volunteer waitlist system
-- Confirmation reminder controls
-- Post-event feedback
-
-**V3**
-- No-show tracking
