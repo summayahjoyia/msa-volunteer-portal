@@ -21,15 +21,17 @@ export default async function Home() {
   }
 
   return (
-    <main className="p-8 max-w-2xl mx-auto min-h-screen bg-background transition-colors">
-      <div className="mb-6 flex items-center gap-3">
-        <ThemeToggle />
-        <div className="flex-1 flex justify-end">
+    <div className="min-h-screen bg-background transition-colors relative">
+      <div className="flex flex-col sm:block items-center gap-3 p-4 sm:p-0">
+        <div className="sm:absolute sm:top-6 sm:left-6">
+          <ThemeToggle />
+        </div>
+        <div className="sm:absolute sm:top-6 sm:right-6 w-full sm:w-auto max-w-[280px] sm:max-w-none flex justify-center sm:block">
           <ProfilePill />
         </div>
       </div>
 
-      <div className="text-center mb-8">
+      <div className="pt-2 sm:pt-16 text-center mb-8">
         <p
           className="text-msa-gold text-base sm:text-lg tracking-wide mb-2"
           style={{ fontFamily: 'serif' }}
@@ -41,7 +43,8 @@ export default async function Home() {
       </div>
 
       {events && events.length > 0 ? (
-        <ul className="space-y-3">
+        <main className="px-4 pb-8 max-w-2xl w-full mx-auto">
+          <ul className="space-y-4">
           {events.map((event) => {
             const signedUpCount = event.signups?.length || 0
             const spotsOpen = Math.max(event.v_capacity - signedUpCount, 0)
@@ -86,9 +89,10 @@ export default async function Home() {
             )
           })}
         </ul>
+        </main>
       ) : (
-        <p className="text-gray-500 dark:text-gray-400">No events yet.</p>
+        <p className="text-gray-500 dark:text-gray-400 text-center">No events yet.</p>
       )}
-    </main>
+    </div>
   )
 }

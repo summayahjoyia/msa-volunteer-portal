@@ -129,40 +129,6 @@ export default function EditEvent() {
       return
     }
 
-    const { data: signupsData } = await supabase
-      .from('signups')
-      .select('volunteers(email)')
-      .eq('event_id', eventId)
-
-    const emails = signupsData?.map((s: any) => s.volunteers?.email).filter(Boolean) || []
-
-    const changedFields: string[] = []
-    if (location !== original.location) changedFields.push('location')
-    if (
-      eventDay.toDateString() !== original.eventDay ||
-      startTime !== original.startTime ||
-      endTime !== original.endTime
-    ) {
-      changedFields.push('date')
-    }
-    if (description !== original.description) changedFields.push('description')
-    if (name !== original.name) changedFields.push('name')
-    if (capacity !== original.capacity) changedFields.push('capacity')
-
-    if (emails.length > 0 && changedFields.length > 0) {
-      await fetch('/api/send-update-notice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          emails,
-          eventName: name,
-          eventDate: newStartDateTime.toISOString(),
-          location,
-          description,
-          changedFields,
-        }),
-      })
-    }
 
     if (calendarEventId) {
       const fallbackEnd = new Date(newStartDateTime.getTime() + 60 * 60 * 1000)
