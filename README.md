@@ -8,8 +8,6 @@ A volunteer coordination portal for the Muslim Students' Association at the Univ
 - **Hosting:** [Vercel](https://vercel.com/)
 - **Database + Auth:** [Supabase](https://supabase.com/)
 
-Chosen to stay consistent with other MSA Digital Solutions projects (the iftar portal and prayer times display), so patterns and auth logic can be reused across projects.
-
 ## Live site
 
 [https://volunteer.msauofa.ca/](https://volunteer.msauofa.ca/)
