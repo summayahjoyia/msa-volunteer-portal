@@ -82,117 +82,124 @@ export default function MyEvents() {
   const attendedCount = rows.filter((r) => r.status === 'attended').length
 
   return (
-    <main className="p-8 max-w-2xl mx-auto min-h-screen bg-background transition-colors">
-      <div className="mb-6 flex items-center gap-3">
-        <ThemeToggle />
-        <div className="flex-1 flex justify-end">
+    <div className="min-h-screen bg-background transition-colors relative">
+      <div className="flex flex-col sm:block items-center gap-3 p-4 sm:p-0">
+        <div className="sm:absolute sm:top-6 sm:left-6">
+          <ThemeToggle />
+        </div>
+        <div className="sm:absolute sm:top-6 sm:right-6 w-full sm:w-auto max-w-[280px] sm:max-w-none flex justify-center sm:block">
           <ProfilePill />
         </div>
       </div>
 
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-msa-green-dark dark:hover:text-msa-cream transition mb-6"
-      >
-        <ChevronLeft size={16} />
-        Back to Events
-      </Link>
+      <main className="px-4 pb-8 pt-2 sm:pt-16 max-w-2xl w-full mx-auto">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-msa-green-dark dark:hover:text-msa-cream transition mb-6"
+        >
+          <ChevronLeft size={16} />
+          Back to Events
+        </Link>
 
-      <div className="text-center mb-8">
-        <p className="text-msa-gold text-base sm:text-lg tracking-wide mb-2" style={{ fontFamily: 'serif' }}>
-          بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-        </p>
-        <h1 className="text-2xl font-bold text-msa-green-dark dark:text-msa-cream">My Events</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          {attendedCount > 0
-            ? `You've attended ${attendedCount} event${attendedCount > 1 ? 's' : ''} — JazakAllah Khair!`
-            : 'Your sign-up history will appear here'}
-        </p>
-      </div>
+        <div className="text-center mb-8">
+          <p className="text-msa-gold text-base sm:text-lg tracking-wide mb-2" style={{ fontFamily: 'serif' }}>
+            بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+          </p>
+          <h1 className="text-2xl font-bold text-msa-green-dark dark:text-msa-cream">My Events</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {attendedCount > 0
+              ? `You've attended ${attendedCount} event${attendedCount > 1 ? 's' : ''} — JazakAllah Khair!`
+              : 'Your sign-up history will appear here'}
+          </p>
+        </div>
 
-      {authLoading || loading ? (
-        <p className="text-gray-500 dark:text-gray-400 text-center">Loading...</p>
-      ) : (
-        <>
-          <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-            Upcoming
-          </h2>
-          {upcoming.length > 0 ? (
-            <ul className="space-y-3 mb-8">
-              {upcoming.map((r) => (
-                <li
-                  key={r.id}
-                  className="bg-white dark:bg-[#2A2A2D] rounded-xl p-4 shadow-sm border-t-4 border-msa-gold"
-                >
-                  <h3 className="font-semibold text-msa-green-dark dark:text-msa-cream">{r.events?.name}</h3>
-                  <div className="mt-1.5 space-y-0.5 text-sm text-gray-500 dark:text-gray-400">
-                    <div className="flex items-center gap-1.5">
-                      <Calendar size={13} />
-                      <span>
-                        {formatEventDate(r.events!.event_date)}, {formatEventTime(r.events!.event_date, r.events!.event_end_date)}
+        {authLoading || loading ? (
+          <p className="text-gray-500 dark:text-gray-400 text-center">Loading...</p>
+        ) : (
+          <>
+            <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+              Upcoming
+            </h2>
+            {upcoming.length > 0 ? (
+              <ul className="space-y-4 mb-8">
+                {upcoming.map((r) => (
+                  <li
+                    key={r.id}
+                    className="bg-white dark:bg-[#2A2A2D] rounded-xl p-4 shadow-sm border-t-4 border-msa-gold transition-colors"
+                  >
+                    <h3 className="text-base font-semibold text-msa-green-dark dark:text-msa-cream">{r.events?.name}</h3>
+                    <div className="mt-2 space-y-0.5 text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex items-start gap-1.5">
+                        <Calendar size={13} className="mt-0.5 shrink-0" />
+                        <div>
+                          <div>{formatEventDate(r.events!.event_date)}</div>
+                          <div>{formatEventTime(r.events!.event_date, r.events!.event_end_date)}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <MapPin size={13} />
+                        <span>{r.events?.location || 'Location TBD'}</span>
+                      </div>
+                    </div>
+                    <div className="border-t border-gray-100 dark:border-gray-700 mt-2 pt-2">
+                      <button
+                        onClick={() => handleCancel(r.id, r.events?.google_calendar_event_id || null)}
+                        disabled={cancellingId === r.id}
+                        className="border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 text-xs px-3 py-1.5 rounded-lg hover:border-red-300 hover:text-red-500 transition disabled:opacity-50"
+                      >
+                        {cancellingId === r.id ? '...' : "Can't make it"}
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400 text-sm mb-8">No upcoming sign-ups.</p>
+            )}
+
+            <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+              Past
+            </h2>
+            {past.length > 0 ? (
+              <ul className="space-y-4">
+                {past.map((r) => (
+                  <li
+                    key={r.id}
+                    className="bg-white dark:bg-[#2A2A2D] rounded-xl p-4 shadow-sm border-t-4 border-gray-200 dark:border-gray-700 transition-colors"
+                  >
+                    <div className="flex justify-between items-start gap-3">
+                      <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">{r.events?.name}</h3>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-md shrink-0 ${
+                          r.status === 'attended'
+                            ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                            : r.status === 'absent'
+                            ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                        }`}
+                      >
+                        {r.status}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <MapPin size={13} />
-                      <span>{r.events?.location || 'Location TBD'}</span>
+                    <div className="mt-2 space-y-0.5 text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar size={13} />
+                        <span>{formatEventDate(r.events!.event_date)}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <MapPin size={13} />
+                        <span>{r.events?.location || 'Location TBD'}</span>
+                      </div>
                     </div>
-                  </div>
-                  <button
-                    onClick={() => handleCancel(r.id, r.events?.google_calendar_event_id || null)}
-                    disabled={cancellingId === r.id}
-                    className="mt-3 border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 text-xs px-3 py-1.5 rounded-lg hover:border-red-300 hover:text-red-500 transition disabled:opacity-50"
-                  >
-                    {cancellingId === r.id ? '...' : "Can't make it"}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-sm mb-8">No upcoming sign-ups.</p>
-          )}
-
-          <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-            Past
-          </h2>
-          {past.length > 0 ? (
-            <ul className="space-y-3">
-              {past.map((r) => (
-                <li
-                  key={r.id}
-                  className="bg-white dark:bg-[#2A2A2D] rounded-xl p-4 shadow-sm border-t-4 border-gray-200 dark:border-gray-700"
-                >
-                  <div className="flex justify-between items-start gap-3">
-                    <h3 className="font-semibold text-gray-700 dark:text-gray-200">{r.events?.name}</h3>
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-md shrink-0 ${
-                        r.status === 'attended'
-                          ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                          : r.status === 'absent'
-                          ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-                      }`}
-                    >
-                      {r.status}
-                    </span>
-                  </div>
-                  <div className="mt-1.5 space-y-0.5 text-sm text-gray-500 dark:text-gray-400">
-                    <div className="flex items-center gap-1.5">
-                      <Calendar size={13} />
-                      <span>{formatEventDate(r.events!.event_date)}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <MapPin size={13} />
-                      <span>{r.events?.location || 'Location TBD'}</span>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-sm">No past events yet.</p>
-          )}
-        </>
-      )}
-    </main>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400 text-sm">No past events yet.</p>
+            )}
+          </>
+        )}
+      </main>
+    </div>
   )
 }
