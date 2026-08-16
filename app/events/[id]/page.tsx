@@ -49,7 +49,7 @@ export default async function EventPage({
         </div>
       </div>
 
-      <main className="px-4 pb-8 max-w-2xl w-full mx-auto">
+      <main className="px-4 pb-8 pt-2 sm:pt-16 max-w-2xl w-full mx-auto">
         <Link
           href="/"
           className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-msa-green-dark dark:hover:text-msa-cream transition mb-6"
