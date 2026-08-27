@@ -60,9 +60,9 @@ export async function GET(request: NextRequest) {
           auth_id: user.id,
           role: null,
         })
-      } else {
+        } else {
         await supabase.auth.signOut()
-        response.headers.set('location', `${origin}/login?error=domain`)
+        response.headers.set('location', `${origin}/`)
       }
     }
 
