@@ -120,6 +120,7 @@ export default function EditEvent() {
         location,
         event_date: newStartDateTime.toISOString(),
         event_end_date: newEndDateTime ? newEndDateTime.toISOString() : null,
+        v_capacity: capacity,
       })
       .eq('id', eventId)
 
