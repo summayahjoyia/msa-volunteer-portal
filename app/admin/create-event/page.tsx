@@ -362,7 +362,7 @@ export default function CreateEvent() {
 
           <div className="min-w-0">
             <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">
-              Group chat link (optional — only sent to volunteers who sign up, never shown publicly)
+              Group chat link (sent to volunteers who sign up)
             </label>
             <input
               placeholder="e.g. WhatsApp group invite link"
@@ -474,7 +474,7 @@ export default function CreateEvent() {
                     <div className="flex flex-col sm:flex-row gap-2 min-w-0">
                       <div className="flex-1 min-w-0">
                         <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">
-                          Start time (optional, defaults to event start)
+                          Start time (defaults: event start)
                         </label>
                         <input
                           type="time"
@@ -485,7 +485,7 @@ export default function CreateEvent() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">
-                          End time (optional, defaults to event end)
+                          End time (default: event end)
                         </label>
                         <input
                           type="time"
