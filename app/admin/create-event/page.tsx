@@ -30,8 +30,7 @@ const PRESET_LOCATIONS = [
 ]
 
 const inputClass =
-  'border rounded px-2 py-1 bg-white dark:bg-[#2A2A2D] dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500 min-w-0'
-
+  'h-9 border rounded px-2 bg-white dark:bg-[#2A2A2D] dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500 min-w-0'
 export default function CreateEvent() {
   const [name, setName] = useState('')
   const [task, setTask] = useState('')
@@ -362,7 +361,7 @@ export default function CreateEvent() {
 
           <div className="min-w-0">
             <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">
-              Group chat link (sent to volunteers who sign up)
+              Group chat link (optional: sent to volunteers who sign up)
             </label>
             <input
               placeholder="e.g. WhatsApp group invite link"
@@ -474,7 +473,7 @@ export default function CreateEvent() {
                     <div className="flex flex-col sm:flex-row gap-2 min-w-0">
                       <div className="flex-1 min-w-0">
                         <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">
-                          Start time (defaults: event start)
+                          Start time (default: event start)
                         </label>
                         <input
                           type="time"
