@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import ProfilePill from './components/ProfilePill'
 import EventSignUpButton from './components/EventSignUpButton'
+import EventRoleSignUp from './components/EventRoleSignUp'
 import ThemeToggle from './components/ThemeToggle'
 import ShareEventButton from './components/ShareEventButton'
 import { formatEventDate, formatEventTime } from '@/lib/formatEventTime'
@@ -12,7 +13,7 @@ export const revalidate = 0
 export default async function Home() {
   const { data: events, error } = await supabase
     .from('events')
-    .select('*, signups(id)')
+    .select('*, signups(id), event_roles(id, role_name, start_time, end_time, capacity, signups(id, volunteer_id))')
     .gte('event_date', new Date().toISOString())
     .order('event_date', { ascending: false })
 
@@ -21,17 +22,15 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background transition-colors relative">
-      <div className="flex flex-col sm:block items-center gap-3 p-4 sm:p-0">
-        <div className="sm:absolute sm:top-6 sm:left-6">
-          <ThemeToggle />
-        </div>
-        <div className="sm:absolute sm:top-6 sm:right-6 w-full sm:w-auto max-w-[280px] sm:max-w-none flex justify-center sm:block">
+    <main className="p-8 max-w-2xl mx-auto min-h-screen bg-background transition-colors">
+      <div className="mb-6 flex items-center gap-3">
+        <ThemeToggle />
+        <div className="flex-1 flex justify-end">
           <ProfilePill />
         </div>
       </div>
 
-      <div className="pt-2 sm:pt-16 text-center mb-8">
+      <div className="text-center mb-8">
         <p
           className="text-msa-gold text-base sm:text-lg tracking-wide mb-2"
           style={{ fontFamily: 'serif' }}
@@ -43,11 +42,11 @@ export default async function Home() {
       </div>
 
       {events && events.length > 0 ? (
-        <main className="px-4 pb-8 max-w-2xl w-full mx-auto">
-          <ul className="space-y-4">
+        <ul className="space-y-3">
           {events.map((event) => {
             const signedUpCount = event.signups?.length || 0
             const spotsOpen = Math.max(event.v_capacity - signedUpCount, 0)
+            const hasRoles = event.event_roles && event.event_roles.length > 0
             return (
               <li
                 key={event.id}
@@ -73,26 +72,36 @@ export default async function Home() {
                     <MapPin size={13} />
                     <span>{event.location || 'Location TBD'}</span>
                   </div>
-                  <p>Spots open: {spotsOpen} of {event.v_capacity}</p>
+                  {!hasRoles && <p>Spots open: {spotsOpen} of {event.v_capacity}</p>}
                 </div>
 
                 <div className="border-t border-gray-100 dark:border-gray-700 mt-2 pt-2 min-h-[100px]">
-                  <EventSignUpButton
-                    eventId={event.id}
-                    eventName={event.name}
-                    eventDate={event.event_date}
-                    location={event.location}
-                    spotsOpen={spotsOpen}
-                  />
+                  {hasRoles ? (
+                    <EventRoleSignUp
+                      eventId={event.id}
+                      eventName={event.name}
+                      location={event.location}
+                      groupChatLink={event.group_chat_link}
+                      googleCalendarEventId={event.google_calendar_event_id}
+                      roles={event.event_roles}
+                    />
+                  ) : (
+                    <EventSignUpButton
+                      eventId={event.id}
+                      eventName={event.name}
+                      eventDate={event.event_date}
+                      location={event.location}
+                      spotsOpen={spotsOpen}
+                    />
+                  )}
                 </div>
               </li>
             )
           })}
         </ul>
-        </main>
       ) : (
-        <p className="text-gray-500 dark:text-gray-400 text-center">No events yet.</p>
+        <p className="text-gray-500 dark:text-gray-400">No events yet.</p>
       )}
-    </div>
+    </main>
   )
 }
