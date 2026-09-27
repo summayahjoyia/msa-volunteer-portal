@@ -8,26 +8,58 @@ export const dynamic = 'force-dynamic'
 export default async function AdminDashboard() {
   const { data: events, error: eventsError } = await supabase
     .from('events')
-    .select('*, signups(id, status, volunteers(name, email))')
+    .select('*, signups(id, status, role_id, volunteers(name, email))')
     .order('event_date', { ascending: true })
 
   if (eventsError) {
     return <div className="p-8 text-red-500">Error loading events: {eventsError.message}</div>
   }
 
-  const csvRows = events?.flatMap((event) =>
+  const eventIds = (events || []).map((e) => e.id)
+
+  const { data: roles, error: rolesError } = eventIds.length
+    ? await supabase
+        .from('event_roles')
+        .select('id, event_id, role_name, start_time, end_time, capacity')
+        .in('event_id', eventIds)
+    : { data: [], error: null }
+
+  if (rolesError) {
+    return <div className="p-8 text-red-500">Error loading roles: {rolesError.message}</div>
+  }
+
+  const roleNameById = new Map((roles || []).map((r) => [r.id, r.role_name]))
+
+  const eventsWithRoles = (events || []).map((event) => {
+    const eventRoles = (roles || [])
+      .filter((r) => r.event_id === event.id)
+      .map((r) => ({
+        ...r,
+        signups: (event.signups || []).filter((s: any) => s.role_id === r.id),
+      }))
+
+    const signupsWithRoleName = (event.signups || []).map((s: any) => ({
+      ...s,
+      role_name: s.role_id ? roleNameById.get(s.role_id) : null,
+    }))
+
+    return { ...event, event_roles: eventRoles, signups: signupsWithRoleName }
+  })
+
+  const csvRows = eventsWithRoles.flatMap((event) =>
     (event.signups?.length
       ? event.signups
-      : [{ volunteers: null, status: 'no sign-ups' }]
+      : [{ volunteers: null, status: 'no sign-ups', role_name: null }]
     ).map((s: any) => ({
       event: event.name,
       date: new Date(event.event_date).toLocaleString(),
       location: event.location,
+      role: s.role_name || '',
       volunteer_name: s.volunteers?.name || '',
       volunteer_email: s.volunteers?.email || '',
       status: s.status,
     }))
-  ) || []
+  )
 
   return (
     <div className="min-h-screen bg-background transition-colors relative">
@@ -47,7 +79,7 @@ export default async function AdminDashboard() {
       />
 
       <main className="p-8 max-w-3xl mx-auto">
-        <EventsList events={events || []} />
+        <EventsList events={eventsWithRoles} />
       </main>
     </div>
   )
