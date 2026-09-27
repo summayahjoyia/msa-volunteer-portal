@@ -7,10 +7,22 @@ import { DayPicker } from 'react-day-picker'
 import 'react-day-picker/dist/style.css'
 import ThemeToggle from '../../../components/ThemeToggle'
 import AdminNav from '../../../components/AdminNav'
+import { Plus, X } from 'lucide-react'
 
 const inputClass =
-  'border rounded px-2 py-1 bg-white dark:bg-[#2A2A2D] dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500'
+  'h-9 border rounded px-2 bg-white dark:bg-[#2A2A2D] dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500 min-w-0'
 const labelClass = 'text-sm block mb-1 text-gray-700 dark:text-gray-300'
+
+type RoleState = {
+  key: string
+  dbId: number | null
+  isNew: boolean
+  name: string
+  startTime: string
+  endTime: string
+  capacity: number
+  googleCalendarEventId: string | null
+}
 
 export default function EditEvent() {
   const params = useParams()
@@ -24,10 +36,13 @@ export default function EditEvent() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
+  const [groupChatLink, setGroupChatLink] = useState('')
   const [eventDay, setEventDay] = useState<Date | undefined>(undefined)
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
   const [capacity, setCapacity] = useState(5)
+  const [roles, setRoles] = useState<RoleState[]>([])
+  const [removedRoleIds, setRemovedRoleIds] = useState<number[]>([])
 
   const [calendarEventId, setCalendarEventId] = useState<string | null>(null)
 
@@ -75,18 +90,62 @@ export default function EditEvent() {
         setName(initial.name)
         setDescription(initial.description)
         setLocation(initial.location)
+        setGroupChatLink(data.group_chat_link || '')
         setEventDay(startDateObj)
         setStartTime(initial.startTime)
         setEndTime(initial.endTime)
         setCapacity(initial.capacity)
         setOriginal(initial)
-
         setCalendarEventId(data.google_calendar_event_id || null)
+
+        const { data: roleRows } = await supabase
+          .from('event_roles')
+          .select('id, role_name, start_time, end_time, capacity, google_calendar_event_id')
+          .eq('event_id', eventId)
+
+        setRoles(
+          (roleRows || []).map((r) => ({
+            key: String(r.id),
+            dbId: r.id,
+            isNew: false,
+            name: r.role_name,
+            startTime: r.start_time ? new Date(r.start_time).toTimeString().slice(0, 5) : '',
+            endTime: r.end_time ? new Date(r.end_time).toTimeString().slice(0, 5) : '',
+            capacity: r.capacity,
+            googleCalendarEventId: r.google_calendar_event_id,
+          }))
+        )
       }
       setLoading(false)
     }
     fetchEvent()
   }, [eventId])
+
+  function addRole() {
+    setRoles((prev) => [
+      ...prev,
+      {
+        key: crypto.randomUUID(),
+        dbId: null,
+        isNew: true,
+        name: '',
+        startTime: '',
+        endTime: '',
+        capacity: 1,
+        googleCalendarEventId: null,
+      },
+    ])
+  }
+
+  function updateRole(key: string, field: keyof RoleState, value: string | number) {
+    setRoles((prev) => prev.map((r) => (r.key === key ? { ...r, [field]: value } : r)))
+  }
+
+  function removeRole(key: string) {
+    const role = roles.find((r) => r.key === key)
+    if (role?.dbId) setRemovedRoleIds((prev) => [...prev, role.dbId!])
+    setRoles((prev) => prev.filter((r) => r.key !== key))
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -109,6 +168,19 @@ export default function EditEvent() {
       }
     }
 
+    for (const role of roles) {
+      if (!role.name.trim()) {
+        setStatus('error')
+        setErrorMessage('Every role needs a name.')
+        return
+      }
+      if (!role.capacity || role.capacity < 1) {
+        setStatus('error')
+        setErrorMessage(`"${role.name}" needs a capacity of at least 1.`)
+        return
+      }
+    }
+
     setStatus('submitting')
     setErrorMessage('')
 
@@ -121,6 +193,7 @@ export default function EditEvent() {
         event_date: newStartDateTime.toISOString(),
         event_end_date: newEndDateTime ? newEndDateTime.toISOString() : null,
         v_capacity: capacity,
+        group_chat_link: groupChatLink || null,
       })
       .eq('id', eventId)
 
@@ -130,6 +203,154 @@ export default function EditEvent() {
       return
     }
 
+    for (const removedId of removedRoleIds) {
+      const { data: stillThere } = await supabase
+        .from('event_roles')
+        .select('google_calendar_event_id')
+        .eq('id', removedId)
+        .single()
+
+      if (stillThere?.google_calendar_event_id) {
+        try {
+          await fetch('/api/calendar/delete-event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ calendarEventId: stillThere.google_calendar_event_id }),
+          })
+        } catch (err) {
+          console.error('Role calendar delete failed:', err)
+        }
+      }
+
+      await supabase.from('event_roles').delete().eq('id', removedId)
+    }
+
+    for (const role of roles) {
+      let roleStart: string
+      let roleEnd: string | null
+
+      if (role.startTime) {
+        const [h, m] = role.startTime.split(':').map(Number)
+        const d = new Date(eventDay)
+        d.setHours(h, m)
+        roleStart = d.toISOString()
+      } else {
+        roleStart = newStartDateTime.toISOString()
+      }
+
+      if (role.endTime) {
+        const [h, m] = role.endTime.split(':').map(Number)
+        const d = new Date(eventDay)
+        d.setHours(h, m)
+        roleEnd = d.toISOString()
+      } else {
+        roleEnd = newEndDateTime ? newEndDateTime.toISOString() : roleStart
+      }
+
+      if (role.isNew) {
+        const { data: insertedRole } = await supabase
+          .from('event_roles')
+          .insert({
+            event_id: eventId,
+            role_name: role.name,
+            start_time: roleStart,
+            end_time: roleEnd,
+            capacity: role.capacity,
+          })
+          .select('id')
+          .single()
+
+        if (insertedRole) {
+          try {
+            const res = await fetch('/api/calendar/create-event', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                summary: `${name} — ${role.name}`,
+                description,
+                location,
+                startDateTime: roleStart,
+                endDateTime: roleEnd,
+                attendeeEmails: [],
+              }),
+            })
+            const result = await res.json()
+            if (result.calendarEventId) {
+              await supabase
+                .from('event_roles')
+                .update({ google_calendar_event_id: result.calendarEventId })
+                .eq('id', insertedRole.id)
+            }
+          } catch (err) {
+            console.error('New role calendar sync failed:', err)
+          }
+        }
+      } else if (role.dbId) {
+        await supabase
+          .from('event_roles')
+          .update({
+            role_name: role.name,
+            start_time: roleStart,
+            end_time: roleEnd,
+            capacity: role.capacity,
+          })
+          .eq('id', role.dbId)
+
+        if (role.googleCalendarEventId) {
+          try {
+            await fetch('/api/calendar/update-event', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                calendarEventId: role.googleCalendarEventId,
+                summary: `${name} — ${role.name}`,
+                description,
+                location,
+                startDateTime: roleStart,
+                endDateTime: roleEnd,
+              }),
+            })
+          } catch (err) {
+            console.error('Role calendar update failed:', err)
+          }
+        }
+      }
+    }
+
+    const { data: signupsData } = await supabase
+      .from('signups')
+      .select('volunteers(email)')
+      .eq('event_id', eventId)
+
+    const emails = signupsData?.map((s: any) => s.volunteers?.email).filter(Boolean) || []
+
+    const changedFields: string[] = []
+    if (location !== original.location) changedFields.push('location')
+    if (
+      eventDay.toDateString() !== original.eventDay ||
+      startTime !== original.startTime ||
+      endTime !== original.endTime
+    ) {
+      changedFields.push('date')
+    }
+    if (description !== original.description) changedFields.push('description')
+    if (name !== original.name) changedFields.push('name')
+    if (capacity !== original.capacity) changedFields.push('capacity')
+
+    if (emails.length > 0 && changedFields.length > 0) {
+      await fetch('/api/send-update-notice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          emails,
+          eventName: name,
+          eventDate: newStartDateTime.toISOString(),
+          location,
+          description,
+          changedFields,
+        }),
+      })
+    }
 
     if (calendarEventId) {
       const fallbackEnd = new Date(newStartDateTime.getTime() + 60 * 60 * 1000)
@@ -178,11 +399,11 @@ export default function EditEvent() {
         <ThemeToggle />
       </div>
       <AdminNav />
-      <main className="p-8 max-w-md mx-auto">
+      <main className="p-4 sm:p-8 max-w-md mx-auto overflow-x-hidden">
         <h1 className="text-xl font-bold mb-4 text-msa-green-dark dark:text-msa-cream">Edit Event</h1>
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col gap-3 bg-white dark:bg-[#2A2A2D] rounded-xl p-6 shadow-sm border-t-4 border-msa-gold transition-colors"
+          className="flex flex-col gap-3 bg-white dark:bg-[#2A2A2D] rounded-xl p-4 sm:p-6 shadow-sm border-t-4 border-msa-gold transition-colors min-w-0"
         >
           <div>
             <label className={labelClass}>Event name</label>
@@ -199,7 +420,7 @@ export default function EditEvent() {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className={`${inputClass} w-full`}
+              className={`${inputClass} w-full h-auto py-2`}
               rows={3}
             />
           </div>
@@ -214,8 +435,20 @@ export default function EditEvent() {
           </div>
 
           <div>
+            <label className={labelClass}>
+              Group chat link (optional — only sent to volunteers who sign up, never shown publicly)
+            </label>
+            <input
+              placeholder="e.g. WhatsApp group invite link"
+              value={groupChatLink}
+              onChange={(e) => setGroupChatLink(e.target.value)}
+              className={`${inputClass} w-full`}
+            />
+          </div>
+
+          <div>
             <label className={labelClass}>Date</label>
-            <div className="flex justify-center">
+            <div className="flex justify-center overflow-x-auto">
               <DayPicker
                 mode="single"
                 selected={eventDay}
@@ -233,8 +466,8 @@ export default function EditEvent() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row gap-3 min-w-0">
+            <div className="flex-1 min-w-0">
               <label className={labelClass}>Start time</label>
               <input
                 type="time"
@@ -244,19 +477,22 @@ export default function EditEvent() {
                 className={`${inputClass} w-full`}
               />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <label className={labelClass}>End time (optional)</label>
               <input
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
+                min={startTime || undefined}
                 className={`${inputClass} w-full`}
               />
             </div>
           </div>
 
           <div>
-            <label className={labelClass}>Volunteers needed</label>
+            <label className={labelClass}>
+              Volunteers needed {roles.length > 0 && '(only used if no roles are listed below)'}
+            </label>
             <input
               type="number"
               value={capacity}
@@ -264,6 +500,84 @@ export default function EditEvent() {
               required
               className={`${inputClass} w-full`}
             />
+          </div>
+
+          <div className="border-t border-gray-100 dark:border-gray-700 pt-4 min-w-0">
+            <div className="flex items-center justify-between mb-2 gap-2">
+              <label className={labelClass}>Roles</label>
+              <button
+                type="button"
+                onClick={addRole}
+                className="text-sm text-msa-green font-medium flex items-center gap-1.5 shrink-0"
+              >
+                <Plus size={15} />
+                Add a role
+              </button>
+            </div>
+
+            {roles.length > 0 && (
+              <div className="flex flex-col gap-3 mt-2">
+                {roles.map((role) => (
+                  <div
+                    key={role.key}
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex flex-col gap-2 min-w-0"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <input
+                        placeholder="Role name (e.g. Set-up)"
+                        value={role.name}
+                        onChange={(e) => updateRole(role.key, 'name', e.target.value)}
+                        className={`${inputClass} flex-1 min-w-0`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeRole(role.key)}
+                        className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-600/10 transition shrink-0"
+                        aria-label="Remove role"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2 min-w-0">
+                      <div className="flex-1 min-w-0">
+                        <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">
+                          Start time
+                        </label>
+                        <input
+                          type="time"
+                          value={role.startTime}
+                          onChange={(e) => updateRole(role.key, 'startTime', e.target.value)}
+                          className={`${inputClass} w-full`}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">
+                          End time
+                        </label>
+                        <input
+                          type="time"
+                          value={role.endTime}
+                          onChange={(e) => updateRole(role.key, 'endTime', e.target.value)}
+                          className={`${inputClass} w-full`}
+                        />
+                      </div>
+                      <div className="w-full sm:w-24 min-w-0">
+                        <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">
+                          Capacity
+                        </label>
+                        <input
+                          type="number"
+                          value={role.capacity}
+                          onChange={(e) => updateRole(role.key, 'capacity', Number(e.target.value))}
+                          min={1}
+                          className={`${inputClass} w-full`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <button
