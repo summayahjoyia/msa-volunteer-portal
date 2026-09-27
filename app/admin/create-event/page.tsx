@@ -8,8 +8,17 @@ import { addDays, addWeeks, addMonths, addYears, format } from 'date-fns'
 import 'react-day-picker/dist/style.css'
 import AdminNav from '../../components/AdminNav'
 import ThemeToggle from '../../components/ThemeToggle'
+import { Plus, X } from 'lucide-react'
 
 type RecurrenceType = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'annually' | 'custom'
+
+type RoleInput = {
+  id: string
+  name: string
+  startTime: string
+  endTime: string
+  capacity: number
+}
 
 const PRESET_LOCATIONS = [
   'Hub Prayer Room',
@@ -30,6 +39,7 @@ export default function CreateEvent() {
   const [notes, setNotes] = useState('')
   const [locationChoice, setLocationChoice] = useState('')
   const [customLocation, setCustomLocation] = useState('')
+  const [groupChatLink, setGroupChatLink] = useState('')
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
   const [time, setTime] = useState('14:00')
   const [endTime, setEndTime] = useState('')
@@ -37,6 +47,7 @@ export default function CreateEvent() {
   const [recurrence, setRecurrence] = useState<RecurrenceType>('none')
   const [occurrences, setOccurrences] = useState(4)
   const [customInterval, setCustomInterval] = useState(3)
+  const [roles, setRoles] = useState<RoleInput[]>([])
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
   const supabase = createClient()
@@ -73,6 +84,21 @@ export default function CreateEvent() {
     return dates
   }, [startDate, recurrence, occurrences, customInterval])
 
+  function addRole() {
+    setRoles((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), name: '', startTime: '', endTime: '', capacity: 1 },
+    ])
+  }
+
+  function updateRole(id: string, field: keyof RoleInput, value: string | number) {
+    setRoles((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)))
+  }
+
+  function removeRole(id: string) {
+    setRoles((prev) => prev.filter((r) => r.id !== id))
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!startDate) return
@@ -94,6 +120,19 @@ export default function CreateEvent() {
       if (endMinutesTotal <= startMinutesTotal) {
         setStatus('error')
         setErrorMessage('End time must be after the start time.')
+        return
+      }
+    }
+
+    for (const role of roles) {
+      if (!role.name.trim()) {
+        setStatus('error')
+        setErrorMessage('Every role needs a name.')
+        return
+      }
+      if (!role.capacity || role.capacity < 1) {
+        setStatus('error')
+        setErrorMessage(`"${role.name}" needs a capacity of at least 1.`)
         return
       }
     }
@@ -124,6 +163,7 @@ export default function CreateEvent() {
         v_capacity: capacity,
         is_recurring: recurrence !== 'none',
         series_id: seriesId,
+        group_chat_link: groupChatLink || null,
       }
     })
 
@@ -136,6 +176,45 @@ export default function CreateEvent() {
       setStatus('error')
       setErrorMessage('Something went wrong — try again.')
       return
+    }
+
+    if (roles.length > 0 && insertedEvents) {
+      for (const ev of insertedEvents) {
+        const eventDay = new Date(ev.event_date)
+
+        const roleRows = roles.map((role) => {
+          let roleStart: string | null = null
+          let roleEnd: string | null = null
+
+          if (role.startTime) {
+            const [h, m] = role.startTime.split(':').map(Number)
+            const d = new Date(eventDay)
+            d.setHours(h, m)
+            roleStart = d.toISOString()
+          } else {
+            roleStart = ev.event_date
+          }
+
+          if (role.endTime) {
+            const [h, m] = role.endTime.split(':').map(Number)
+            const d = new Date(eventDay)
+            d.setHours(h, m)
+            roleEnd = d.toISOString()
+          } else {
+            roleEnd = ev.event_end_date
+          }
+
+          return {
+            event_id: ev.id,
+            role_name: role.name,
+            start_time: roleStart,
+            end_time: roleEnd,
+            capacity: role.capacity,
+          }
+        })
+
+        await supabase.from('event_roles').insert(roleRows)
+      }
     }
 
     for (const ev of insertedEvents || []) {
@@ -253,6 +332,18 @@ export default function CreateEvent() {
           </div>
 
           <div>
+            <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">
+              Group chat link (optional — only sent to volunteers who sign up, never shown publicly)
+            </label>
+            <input
+              placeholder="e.g. WhatsApp group invite link"
+              value={groupChatLink}
+              onChange={(e) => setGroupChatLink(e.target.value)}
+              className={`${inputClass} w-full`}
+            />
+          </div>
+
+          <div>
             <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">Start date</label>
             <div className="flex justify-center">
               <DayPicker
@@ -294,13 +385,16 @@ export default function CreateEvent() {
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
+                min={time || undefined}
                 className={`${inputClass} w-full`}
               />
             </div>
           </div>
 
           <div>
-            <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">Volunteers needed</label>
+            <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">
+              Volunteers needed {roles.length > 0 && '(only used if no roles are added below)'}
+            </label>
             <input
               type="number"
               value={capacity}
@@ -308,6 +402,86 @@ export default function CreateEvent() {
               required
               className={`${inputClass} w-full`}
             />
+          </div>
+
+          <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm block text-gray-700 dark:text-gray-300">
+                Roles (optional — lets volunteers pick a specific task instead of a general sign-up)
+              </label>
+              <button
+                type="button"
+                onClick={addRole}
+                className="text-sm text-msa-green font-medium flex items-center gap-1.5"
+              >
+                <Plus size={15} />
+                Add a role
+              </button>
+            </div>
+
+            {roles.length > 0 && (
+              <div className="flex flex-col gap-3 mt-2">
+                {roles.map((role) => (
+                  <div
+                    key={role.id}
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex flex-col gap-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        placeholder="Role name (e.g. Set-up)"
+                        value={role.name}
+                        onChange={(e) => updateRole(role.id, 'name', e.target.value)}
+                        className={`${inputClass} flex-1`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeRole(role.id)}
+                        className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-600/10 transition"
+                        aria-label="Remove role"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">
+                          Start time (optional, defaults to event start)
+                        </label>
+                        <input
+                          type="time"
+                          value={role.startTime}
+                          onChange={(e) => updateRole(role.id, 'startTime', e.target.value)}
+                          className={`${inputClass} w-full`}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">
+                          End time (optional, defaults to event end)
+                        </label>
+                        <input
+                          type="time"
+                          value={role.endTime}
+                          onChange={(e) => updateRole(role.id, 'endTime', e.target.value)}
+                          className={`${inputClass} w-full`}
+                        />
+                      </div>
+                      <div className="w-full sm:w-28">
+                        <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">
+                          Capacity
+                        </label>
+                        <input
+                          type="number"
+                          value={role.capacity}
+                          onChange={(e) => updateRole(role.id, 'capacity', Number(e.target.value))}
+                          min={1}
+                          className={`${inputClass} w-full`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
@@ -356,6 +530,7 @@ export default function CreateEvent() {
             <p className="text-sm text-gray-600 dark:text-gray-400">
               This will create {generatedDates.length} event{generatedDates.length > 1 ? 's' : ''} on:{' '}
               {generatedDates.map((d) => format(d, 'MMM d')).join(', ')}
+              {roles.length > 0 && `, each with ${roles.length} role${roles.length > 1 ? 's' : ''}`}
             </p>
           )}
 
