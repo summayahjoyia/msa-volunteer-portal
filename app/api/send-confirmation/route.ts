@@ -1,20 +1,18 @@
 import { Resend } from 'resend'
 import { NextResponse } from 'next/server'
-import { format } from 'date-fns'
+import { formatEmailDateTime } from '@/lib/formatEventTime'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-function formatEmailDateTime(dateStr: string) {
-  const date = new Date(dateStr)
-  return {
-    dateLine: format(date, 'EEEE, MMMM d, yyyy'),
-    timeLine: format(date, 'h:mm a'),
-  }
-}
-
 export async function POST(request: Request) {
-  const { email, name, eventName, eventDate, location } = await request.json()
+  const { email, name, eventName, eventDate, location, groupChatLink, roleName } = await request.json()
   const { dateLine, timeLine } = formatEmailDateTime(eventDate)
+
+  const groupChatHtml = groupChatLink
+    ? `<p>Join the volunteer group chat for this event: <a href="${groupChatLink}">${groupChatLink}</a></p>`
+    : ''
+
+  const roleHtml = roleName ? `<p>Role: <strong>${roleName}</strong></p>` : ''
 
   try {
     await resend.emails.send({
@@ -24,12 +22,15 @@ export async function POST(request: Request) {
       html: `
         <p>Hi ${name},</p>
         <p>You're confirmed for <strong>${eventName}</strong>.</p>
+        ${roleHtml}
         <p>
           📅 ${dateLine}<br/>
           🕒 ${timeLine}<br/>
           📍 ${location || 'TBD'}
         </p>
+        ${groupChatHtml}
         <p style="color: #D4A537; font-style: italic;">JazakAllah Khair — may Allah reward you for stepping up to serve your community.</p>
+        <p>If this wasn't you, please let an MSA exec know right away.</p>
       `,
     })
     return NextResponse.json({ success: true })

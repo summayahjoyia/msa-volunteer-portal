@@ -51,6 +51,8 @@ export default function EventsList({ events }: { events: any[] }) {
 
   function renderEventCard(event: any) {
     const editable = isEditable(event.event_date, event.event_end_date)
+    const hasRoles = event.event_roles && event.event_roles.length > 0
+
     return (
       <li key={event.id} className="bg-white dark:bg-[#2A2A2D] rounded-xl p-5 shadow-sm border-t-4 border-msa-gold transition-colors">
         <div className="flex justify-between items-start gap-3">
@@ -84,15 +86,31 @@ export default function EventsList({ events }: { events: any[] }) {
           </div>
         </div>
 
-        <p className="text-sm mt-2 mb-2 text-msa-green dark:text-[#3B9A72]">
-          Sign-ups: {event.signups?.length || 0} / {event.v_capacity}
-        </p>
+        {hasRoles ? (
+          <div className="mt-2 mb-2 space-y-1">
+            {event.event_roles.map((role: any) => (
+              <p key={role.id} className="text-sm text-msa-green dark:text-[#3B9A72]">
+                {role.role_name}: {role.signups?.length || 0} / {role.capacity}
+              </p>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm mt-2 mb-2 text-msa-green dark:text-[#3B9A72]">
+            Sign-ups: {event.signups?.length || 0} / {event.v_capacity}
+          </p>
+        )}
+
         {event.signups && event.signups.length > 0 ? (
           <ul className="text-sm space-y-1 mt-2">
             {event.signups.map((s: any) => (
               <li key={s.id} className="flex justify-between items-center border-t border-gray-100 dark:border-gray-700 pt-1">
                 <div>
-                  <div className="text-gray-900 dark:text-gray-100">{s.volunteers?.name}</div>
+                  <div className="text-gray-900 dark:text-gray-100">
+                    {s.volunteers?.name}
+                    {s.role_name && (
+                      <span className="text-xs text-gray-400 ml-1.5">({s.role_name})</span>
+                    )}
+                  </div>
                   <div className="text-xs text-gray-400">{s.volunteers?.email}</div>
                 </div>
                 <MarkAttendanceButton signupId={s.id} currentStatus={s.status} />

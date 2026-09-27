@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import ProfilePill from '../../components/ProfilePill'
 import EventSignUpButton from '../../components/EventSignUpButton'
+import EventRoleSignUp from '../../components/EventRoleSignUp'
 import ThemeToggle from '../../components/ThemeToggle'
 import Link from 'next/link'
 import { formatEventDate, formatEventTime } from '@/lib/formatEventTime'
@@ -18,7 +19,7 @@ export default async function EventPage({
 
   const { data: event, error } = await supabase
     .from('events')
-    .select('*, signups(id)')
+    .select('*, signups(id), event_roles(id, role_name, start_time, end_time, capacity, signups(id, volunteer_id))')
     .eq('id', id)
     .single()
 
@@ -37,6 +38,7 @@ export default async function EventPage({
 
   const signedUpCount = event.signups?.length || 0
   const spotsOpen = Math.max(event.v_capacity - signedUpCount, 0)
+  const hasRoles = event.event_roles && event.event_roles.length > 0
 
   return (
     <div className="min-h-screen bg-background transition-colors relative">
@@ -82,17 +84,28 @@ export default async function EventPage({
               <MapPin size={13} />
               <span>{event.location || 'Location TBD'}</span>
             </div>
-            <p>Spots open: {spotsOpen} of {event.v_capacity}</p>
+            {!hasRoles && <p>Spots open: {spotsOpen} of {event.v_capacity}</p>}
           </div>
 
           <div className="border-t border-gray-100 dark:border-gray-700 mt-2 pt-2 min-h-[100px]">
-            <EventSignUpButton
-              eventId={event.id}
-              eventName={event.name}
-              eventDate={event.event_date}
-              location={event.location}
-              spotsOpen={spotsOpen}
-            />
+            {hasRoles ? (
+              <EventRoleSignUp
+                eventId={event.id}
+                eventName={event.name}
+                location={event.location}
+                groupChatLink={event.group_chat_link}
+                googleCalendarEventId={event.google_calendar_event_id}
+                roles={event.event_roles}
+              />
+            ) : (
+              <EventSignUpButton
+                eventId={event.id}
+                eventName={event.name}
+                eventDate={event.event_date}
+                location={event.location}
+                spotsOpen={spotsOpen}
+              />
+            )}
           </div>
         </div>
       </main>
