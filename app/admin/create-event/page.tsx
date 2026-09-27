@@ -30,7 +30,7 @@ const PRESET_LOCATIONS = [
 ]
 
 const inputClass =
-  'border rounded px-2 py-1 bg-white dark:bg-[#2A2A2D] dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500'
+  'border rounded px-2 py-1 bg-white dark:bg-[#2A2A2D] dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500 min-w-0'
 
 export default function CreateEvent() {
   const [name, setName] = useState('')
@@ -214,35 +214,35 @@ export default function CreateEvent() {
         })
 
         const { data: insertedRoles } = await supabase
-  .from('event_roles')
-  .insert(roleRows)
-  .select('id, role_name, start_time, end_time')
+          .from('event_roles')
+          .insert(roleRows)
+          .select('id, role_name, start_time, end_time')
 
-for (const insertedRole of insertedRoles || []) {
-  try {
-    const res = await fetch('/api/calendar/create-event', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        summary: `${ev.name} — ${insertedRole.role_name}`,
-        description: ev.description,
-        location: ev.location,
-        startDateTime: insertedRole.start_time,
-        endDateTime: insertedRole.end_time || insertedRole.start_time,
-        attendeeEmails: [],
-      }),
-          })
-          const result = await res.json()
-          if (result.calendarEventId) {
-            await supabase
-              .from('event_roles')
-              .update({ google_calendar_event_id: result.calendarEventId })
-              .eq('id', insertedRole.id)
+        for (const insertedRole of insertedRoles || []) {
+          try {
+            const res = await fetch('/api/calendar/create-event', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                summary: `${ev.name} — ${insertedRole.role_name}`,
+                description: ev.description,
+                location: ev.location,
+                startDateTime: insertedRole.start_time,
+                endDateTime: insertedRole.end_time || insertedRole.start_time,
+                attendeeEmails: [],
+              }),
+            })
+            const result = await res.json()
+            if (result.calendarEventId) {
+              await supabase
+                .from('event_roles')
+                .update({ google_calendar_event_id: result.calendarEventId })
+                .eq('id', insertedRole.id)
+            }
+          } catch (err) {
+            console.error('Role calendar sync failed:', err)
           }
-        } catch (err) {
-          console.error('Role calendar sync failed:', err)
         }
-      }
       }
     }
 
@@ -285,23 +285,23 @@ for (const insertedRole of insertedRoles || []) {
       </div>
 
       <AdminNav />
-      <main className="p-8 max-w-2xl mx-auto">
+      <main className="p-4 sm:p-8 max-w-2xl mx-auto overflow-x-hidden">
         <div className="mb-6 text-center">
           <p className="text-msa-gold text-base sm:text-lg tracking-wide mb-2" style={{ fontFamily: 'serif' }}>
             بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
           </p>
           <h1 className="text-2xl font-bold text-msa-green-dark dark:text-msa-cream">Create Event</h1>
         </div>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 bg-white dark:bg-[#2A2A2D] rounded-xl p-6 shadow-sm border-t-4 border-msa-gold transition-colors">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 bg-white dark:bg-[#2A2A2D] rounded-xl p-4 sm:p-6 shadow-sm border-t-4 border-msa-gold transition-colors min-w-0">
           <input
             placeholder="Event name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            className={inputClass}
+            className={`${inputClass} w-full`}
           />
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 min-w-0">
             <label className="text-sm block text-gray-700 dark:text-gray-300">Description</label>
             <div>
               <label className="text-xs text-gray-600 dark:text-gray-400 block">What will volunteers be doing?</label>
@@ -333,10 +333,10 @@ for (const insertedRole of insertedRoles || []) {
                 rows={2}
               />
             </div>
-            {description && <p className="text-sm text-gray-500 dark:text-gray-400 italic">Preview: {description}</p>}
+            {description && <p className="text-sm text-gray-500 dark:text-gray-400 italic break-words">Preview: {description}</p>}
           </div>
 
-          <div>
+          <div className="min-w-0">
             <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">Location</label>
             <select
               value={locationChoice}
@@ -360,9 +360,9 @@ for (const insertedRole of insertedRoles || []) {
             )}
           </div>
 
-          <div>
+          <div className="min-w-0">
             <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">
-              Group chat link (optional — only sent to volunteers who sign up.)
+              Group chat link (optional — only sent to volunteers who sign up, never shown publicly)
             </label>
             <input
               placeholder="e.g. WhatsApp group invite link"
@@ -372,9 +372,9 @@ for (const insertedRole of insertedRoles || []) {
             />
           </div>
 
-          <div>
+          <div className="min-w-0">
             <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">Start date</label>
-            <div className="flex justify-center">
+            <div className="flex justify-center overflow-x-auto">
               <DayPicker
                 mode="single"
                 selected={startDate}
@@ -396,8 +396,8 @@ for (const insertedRole of insertedRoles || []) {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row gap-3 min-w-0">
+            <div className="flex-1 min-w-0">
               <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">Start time</label>
               <input
                 type="time"
@@ -408,7 +408,7 @@ for (const insertedRole of insertedRoles || []) {
                 className={`${inputClass} w-full`}
               />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">End time (optional)</label>
               <input
                 type="time"
@@ -420,7 +420,7 @@ for (const insertedRole of insertedRoles || []) {
             </div>
           </div>
 
-          <div>
+          <div className="min-w-0">
             <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">
               Volunteers needed {roles.length > 0 && '(only used if no roles are added below)'}
             </label>
@@ -433,15 +433,15 @@ for (const insertedRole of insertedRoles || []) {
             />
           </div>
 
-          <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
-            <div className="flex items-center justify-between mb-2">
+          <div className="border-t border-gray-100 dark:border-gray-700 pt-4 min-w-0">
+            <div className="flex items-center justify-between mb-2 gap-2">
               <label className="text-sm block text-gray-700 dark:text-gray-300">
                 Roles (optional — lets volunteers pick a specific task instead of a general sign-up)
               </label>
               <button
                 type="button"
                 onClick={addRole}
-                className="text-sm text-msa-green font-medium flex items-center gap-1.5"
+                className="text-sm text-msa-green font-medium flex items-center gap-1.5 shrink-0"
               >
                 <Plus size={15} />
                 Add a role
@@ -453,28 +453,28 @@ for (const insertedRole of insertedRoles || []) {
                 {roles.map((role) => (
                   <div
                     key={role.id}
-                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex flex-col gap-2"
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex flex-col gap-2 min-w-0"
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
                       <input
                         placeholder="Role name (e.g. Set-up)"
                         value={role.name}
                         onChange={(e) => updateRole(role.id, 'name', e.target.value)}
-                        className={`${inputClass} flex-1`}
+                        className={`${inputClass} flex-1 min-w-0`}
                       />
                       <button
                         type="button"
                         onClick={() => removeRole(role.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-600/10 transition"
+                        className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-600/10 transition shrink-0"
                         aria-label="Remove role"
                       >
                         <X size={16} />
                       </button>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <div className="flex-1">
+                    <div className="flex flex-col sm:flex-row gap-2 min-w-0">
+                      <div className="flex-1 min-w-0">
                         <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">
-                          Start time (default: event start)
+                          Start time (optional, defaults to event start)
                         </label>
                         <input
                           type="time"
@@ -483,9 +483,9 @@ for (const insertedRole of insertedRoles || []) {
                           className={`${inputClass} w-full`}
                         />
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">
-                          End time (default: event end)
+                          End time (optional, defaults to event end)
                         </label>
                         <input
                           type="time"
@@ -494,7 +494,7 @@ for (const insertedRole of insertedRoles || []) {
                           className={`${inputClass} w-full`}
                         />
                       </div>
-                      <div className="w-full sm:w-28">
+                      <div className="w-full sm:w-24 min-w-0">
                         <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">
                           Capacity
                         </label>
@@ -513,7 +513,7 @@ for (const insertedRole of insertedRoles || []) {
             )}
           </div>
 
-          <div>
+          <div className="min-w-0">
             <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">Repeats</label>
             <select
               value={recurrence}
@@ -522,8 +522,8 @@ for (const insertedRole of insertedRoles || []) {
             >
               <option value="none">Doesn't repeat</option>
               <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
               <option value="biweekly">Biweekly</option>
+              <option value="weekly">Weekly</option>
               <option value="monthly">Monthly</option>
               <option value="annually">Annually</option>
               <option value="custom">Custom</option>
@@ -544,19 +544,19 @@ for (const insertedRole of insertedRoles || []) {
           )}
 
           {recurrence !== 'none' && (
-            <div>
+            <div className="min-w-0">
               <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">Number of occurrences</label>
               <input
                 type="number"
                 value={occurrences}
                 onChange={(e) => setOccurrences(Number(e.target.value))}
-                className={inputClass}
+                className={`${inputClass} w-full`}
               />
             </div>
           )}
 
           {generatedDates.length > 0 && (
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-600 dark:text-gray-400 break-words">
               This will create {generatedDates.length} event{generatedDates.length > 1 ? 's' : ''} on:{' '}
               {generatedDates.map((d) => format(d, 'MMM d')).join(', ')}
               {roles.length > 0 && `, each with ${roles.length} role${roles.length > 1 ? 's' : ''}`}
