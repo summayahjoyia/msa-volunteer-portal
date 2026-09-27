@@ -26,7 +26,7 @@ export default async function Home() {
   const { data: roles, error: rolesError } = eventIds.length
     ? await supabase
         .from('event_roles')
-        .select('id, event_id, role_name, start_time, end_time, capacity, signups(id, volunteer_id)')
+        .select('id, event_id, role_name, start_time, end_time, capacity, google_calendar_event_id, signups(id, volunteer_id)')
         .in('event_id', eventIds)
     : { data: [], error: null }
 
@@ -103,7 +103,7 @@ export default async function Home() {
                       eventName={event.name}
                       location={event.location}
                       groupChatLink={event.group_chat_link}
-                      googleCalendarEventId={event.google_calendar_event_id}
+              
                       roles={eventRoles}
                     />
                   ) : (

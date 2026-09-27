@@ -12,6 +12,7 @@ type RoleData = {
   start_time: string | null
   end_time: string | null
   capacity: number
+  google_calendar_event_id: string | null
   signups: { id: number; volunteer_id: number }[]
 }
 
@@ -20,14 +21,12 @@ export default function EventRoleSignUp({
   eventName,
   location,
   groupChatLink,
-  googleCalendarEventId,
   roles,
 }: {
   eventId: number
   eventName: string
   location: string
   groupChatLink: string | null
-  googleCalendarEventId: string | null
   roles: RoleData[]
 }) {
   const supabase = createClient()
@@ -57,13 +56,17 @@ export default function EventRoleSignUp({
     loadVolunteer()
   }, [authLoading, user?.email])
 
-  async function syncCalendarAttendee(action: 'add' | 'remove', email: string) {
-    if (!googleCalendarEventId) return
+  async function syncCalendarAttendee(
+    action: 'add' | 'remove',
+    calendarEventId: string | null,
+    email: string
+  ) {
+    if (!calendarEventId) return
     try {
       await fetch(`/api/calendar/${action === 'add' ? 'add-attendee' : 'remove-attendee'}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ calendarEventId: googleCalendarEventId, email }),
+        body: JSON.stringify({ calendarEventId, email }),
       })
     } catch (err) {
       console.error('Calendar attendee sync failed:', err)
@@ -116,7 +119,7 @@ export default function EventRoleSignUp({
       }),
     })
 
-    await syncCalendarAttendee('add', volunteer.email)
+    await syncCalendarAttendee('add', role.google_calendar_event_id, volunteer.email)
 
     setPendingRoleId(null)
     router.refresh()
@@ -132,15 +135,7 @@ export default function EventRoleSignUp({
     const { error } = await supabase.from('signups').delete().eq('id', mySignup.id)
 
     if (!error) {
-      const { count: remaining } = await supabase
-        .from('signups')
-        .select('id', { count: 'exact', head: true })
-        .eq('event_id', eventId)
-        .eq('volunteer_id', volunteer.id)
-
-      if ((remaining || 0) === 0) {
-        await syncCalendarAttendee('remove', volunteer.email)
-      }
+      await syncCalendarAttendee('remove', role.google_calendar_event_id, volunteer.email)
     }
 
     setPendingRoleId(null)

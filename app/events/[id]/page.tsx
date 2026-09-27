@@ -39,7 +39,7 @@ export default async function EventPage({
 
   const { data: roles, error: rolesError } = await supabase
     .from('event_roles')
-    .select('id, event_id, role_name, start_time, end_time, capacity, signups(id, volunteer_id)')
+    .select('id, event_id, role_name, start_time, end_time, capacity, google_calendar_event_id, signups(id, volunteer_id)')
     .eq('event_id', event.id)
 
   if (rolesError) {
@@ -104,7 +104,6 @@ export default async function EventPage({
                 eventName={event.name}
                 location={event.location}
                 groupChatLink={event.group_chat_link}
-                googleCalendarEventId={event.google_calendar_event_id}
                 roles={roles || []}
               />
             ) : (

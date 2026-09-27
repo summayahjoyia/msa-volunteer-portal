@@ -213,7 +213,36 @@ export default function CreateEvent() {
           }
         })
 
-        await supabase.from('event_roles').insert(roleRows)
+        const { data: insertedRoles } = await supabase
+  .from('event_roles')
+  .insert(roleRows)
+  .select('id, role_name, start_time, end_time')
+
+for (const insertedRole of insertedRoles || []) {
+  try {
+    const res = await fetch('/api/calendar/create-event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        summary: `${ev.name} — ${insertedRole.role_name}`,
+        description: ev.description,
+        location: ev.location,
+        startDateTime: insertedRole.start_time,
+        endDateTime: insertedRole.end_time || insertedRole.start_time,
+        attendeeEmails: [],
+      }),
+          })
+          const result = await res.json()
+          if (result.calendarEventId) {
+            await supabase
+              .from('event_roles')
+              .update({ google_calendar_event_id: result.calendarEventId })
+              .eq('id', insertedRole.id)
+          }
+        } catch (err) {
+          console.error('Role calendar sync failed:', err)
+        }
+      }
       }
     }
 
