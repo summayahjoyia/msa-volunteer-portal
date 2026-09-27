@@ -37,6 +37,7 @@ export default function EventRoleSignUp({
   const [volunteer, setVolunteer] = useState<{ id: number; name: string; email: string } | null>(null)
   const [pendingRoleId, setPendingRoleId] = useState<number | null>(null)
   const [errorMessage, setErrorMessage] = useState('')
+  const [optimisticChecked, setOptimisticChecked] = useState<Record<number, boolean>>({})
 
   useEffect(() => {
     async function loadVolunteer() {
@@ -56,25 +57,22 @@ export default function EventRoleSignUp({
     loadVolunteer()
   }, [authLoading, user?.email])
 
-  async function syncCalendarAttendee(
-    action: 'add' | 'remove',
-    calendarEventId: string | null,
-    email: string
-  ) {
+  useEffect(() => {
+    setOptimisticChecked({})
+  }, [roles])
+
+  function syncCalendarAttendee(action: 'add' | 'remove', calendarEventId: string | null, email: string) {
     if (!calendarEventId) return
-    try {
-      await fetch(`/api/calendar/${action === 'add' ? 'add-attendee' : 'remove-attendee'}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ calendarEventId, email }),
-      })
-    } catch (err) {
-      console.error('Calendar attendee sync failed:', err)
-    }
+    fetch(`/api/calendar/${action === 'add' ? 'add-attendee' : 'remove-attendee'}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ calendarEventId, email }),
+    }).catch((err) => console.error('Calendar attendee sync failed:', err))
   }
 
   async function handleSignUp(role: RoleData) {
     if (!volunteer) return
+    setOptimisticChecked((prev) => ({ ...prev, [role.id]: true }))
     setPendingRoleId(role.id)
     setErrorMessage('')
 
@@ -84,6 +82,7 @@ export default function EventRoleSignUp({
       .eq('role_id', role.id)
 
     if ((count || 0) >= role.capacity) {
+      setOptimisticChecked((prev) => ({ ...prev, [role.id]: false }))
       setErrorMessage(`Sorry, "${role.role_name}" just filled up.`)
       setPendingRoleId(null)
       router.refresh()
@@ -95,6 +94,7 @@ export default function EventRoleSignUp({
       .insert({ event_id: eventId, volunteer_id: volunteer.id, role_id: role.id, status: 'confirmed' })
 
     if (error) {
+      setOptimisticChecked((prev) => ({ ...prev, [role.id]: false }))
       setErrorMessage(
         error.message?.includes('EVENT_FULL')
           ? `Sorry, "${role.role_name}" just filled up.`
@@ -105,7 +105,7 @@ export default function EventRoleSignUp({
       return
     }
 
-    await fetch('/api/send-confirmation', {
+    fetch('/api/send-confirmation', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -117,9 +117,9 @@ export default function EventRoleSignUp({
         groupChatLink,
         roleName: role.role_name,
       }),
-    })
+    }).catch((err) => console.error('Confirmation email failed:', err))
 
-    await syncCalendarAttendee('add', role.google_calendar_event_id, volunteer.email)
+    syncCalendarAttendee('add', role.google_calendar_event_id, volunteer.email)
 
     setPendingRoleId(null)
     router.refresh()
@@ -130,13 +130,18 @@ export default function EventRoleSignUp({
     const mySignup = role.signups.find((s) => s.volunteer_id === volunteer.id)
     if (!mySignup) return
 
+    setOptimisticChecked((prev) => ({ ...prev, [role.id]: false }))
     setPendingRoleId(role.id)
 
     const { error } = await supabase.from('signups').delete().eq('id', mySignup.id)
 
-    if (!error) {
-      await syncCalendarAttendee('remove', role.google_calendar_event_id, volunteer.email)
+    if (error) {
+      setOptimisticChecked((prev) => ({ ...prev, [role.id]: true }))
+      setPendingRoleId(null)
+      return
     }
+
+    syncCalendarAttendee('remove', role.google_calendar_event_id, volunteer.email)
 
     setPendingRoleId(null)
     router.refresh()
@@ -151,8 +156,8 @@ export default function EventRoleSignUp({
   return (
     <div className="mt-3 flex flex-col gap-2">
       {roles.map((role) => {
-        const mySignup = role.signups.find((s) => s.volunteer_id === volunteer.id)
-        const isChecked = !!mySignup
+        const serverChecked = role.signups.some((s) => s.volunteer_id === volunteer.id)
+        const isChecked = role.id in optimisticChecked ? optimisticChecked[role.id] : serverChecked
         const spotsOpen = Math.max(role.capacity - role.signups.length, 0)
         const isFull = spotsOpen <= 0 && !isChecked
         const isPending = pendingRoleId === role.id
