@@ -13,12 +13,32 @@ export const revalidate = 0
 export default async function Home() {
   const { data: events, error } = await supabase
     .from('events')
-    .select('*, signups(id), event_roles(id, role_name, start_time, end_time, capacity, signups(id, volunteer_id))')
+    .select('*, signups(id)')
     .gte('event_date', new Date().toISOString())
     .order('event_date', { ascending: false })
 
   if (error) {
     return <div className="p-8 text-red-500">Error loading events: {error.message}</div>
+  }
+
+  const eventIds = (events || []).map((e) => e.id)
+
+  const { data: roles, error: rolesError } = eventIds.length
+    ? await supabase
+        .from('event_roles')
+        .select('id, event_id, role_name, start_time, end_time, capacity, signups(id, volunteer_id)')
+        .in('event_id', eventIds)
+    : { data: [], error: null }
+
+  if (rolesError) {
+    return <div className="p-8 text-red-500">Error loading roles: {rolesError.message}</div>
+  }
+
+  const rolesByEvent = new Map<number, typeof roles>()
+  for (const role of roles || []) {
+    const list = rolesByEvent.get(role.event_id) || []
+    list.push(role)
+    rolesByEvent.set(role.event_id, list)
   }
 
   return (
@@ -46,7 +66,8 @@ export default async function Home() {
           {events.map((event) => {
             const signedUpCount = event.signups?.length || 0
             const spotsOpen = Math.max(event.v_capacity - signedUpCount, 0)
-            const hasRoles = event.event_roles && event.event_roles.length > 0
+            const eventRoles = rolesByEvent.get(event.id) || []
+            const hasRoles = eventRoles.length > 0
             return (
               <li
                 key={event.id}
@@ -83,7 +104,7 @@ export default async function Home() {
                       location={event.location}
                       groupChatLink={event.group_chat_link}
                       googleCalendarEventId={event.google_calendar_event_id}
-                      roles={event.event_roles}
+                      roles={eventRoles}
                     />
                   ) : (
                     <EventSignUpButton
