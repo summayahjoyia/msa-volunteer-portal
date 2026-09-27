@@ -9,6 +9,21 @@
   --msa-gold: #D4A537;
   --msa-cream: #F5F1E8;
 }
+input[type="time"] {
+  height: 2.25rem;
+  box-sizing: border-box;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+input[type="time"]::-webkit-datetime-edit {
+  padding: 0;
+}
+
+input[type="time"]::-webkit-calendar-picker-indicator {
+  padding: 0;
+  margin-left: 4px;
+}
 
 .dark {
   --background: #1C1C1E;
