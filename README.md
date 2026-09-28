@@ -14,4 +14,4 @@ A volunteer coordination portal for the Muslim Students' Association at the Univ
 
 ## Status
 
-🚧 Early development — see [Issues](../../issues) for planned features and progress.
+See [Issues](../../issues) for planned features and progress.
