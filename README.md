@@ -1,6 +1,6 @@
 # MSA Volunteer Portal
 
-A volunteer coordination portal for the Muslim Students' Association at the University of Alberta, built to replace group-chat coordination with a structured sign-up, waitlist, and admin system.
+A volunteer coordination portal for the Muslim Students' Association at the University of Alberta, built to replace group-chat coordination with a structured sign-up and admin system.
 
 ## Stack
 
