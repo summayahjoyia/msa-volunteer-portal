@@ -4,12 +4,16 @@ import { useState, useEffect, Fragment } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import AdminTabs from '../../components/AdminTabs'
 import ThemeToggle from '../../components/ThemeToggle'
+import VolunteerGenderSelect from '../../components/VolunteerGenderSelect'
 import { ChevronRight } from 'lucide-react'
+
+type Gender = 'sister' | 'brother'
 
 type Volunteer = {
   id: number
   name: string
   email: string
+  gender: Gender | null
   signups: { status: string; events: { name: string; event_date: string } | null }[]
 }
 
@@ -24,13 +28,17 @@ export default function VolunteerHistory() {
     async function fetchVolunteers() {
       const { data } = await supabase
         .from('volunteers')
-        .select('id, name, email, signups(status, events(name, event_date))')
+        .select('id, name, email, gender, signups(status, events(name, event_date))')
         .order('name', { ascending: true })
       setVolunteers((data as any) || [])
       setLoading(false)
     }
     fetchVolunteers()
   }, [])
+
+  function handleGenderChanged(id: number, gender: Gender) {
+    setVolunteers((prev) => prev.map((v) => (v.id === id ? { ...v, gender } : v)))
+  }
 
   const filtered = volunteers.filter(
     (v) =>
@@ -98,6 +106,16 @@ export default function VolunteerHistory() {
                         <tr className="bg-gray-50/60 dark:bg-[#242426]">
                           <td colSpan={4} className="px-4 py-3">
                             <p className="text-xs text-gray-500 dark:text-gray-400 sm:hidden mb-2">{v.email}</p>
+
+                            <div className="flex items-start gap-2 mb-3">
+                              <span className="text-xs text-gray-500 dark:text-gray-400 pt-2">Gender</span>
+                              <VolunteerGenderSelect
+                                volunteerId={v.id}
+                                currentGender={v.gender}
+                                onChanged={(g) => handleGenderChanged(v.id, g)}
+                              />
+                            </div>
+
                             {v.signups && v.signups.length > 0 ? (
                               <ul className="space-y-1.5">
                                 {v.signups.map((s, i) => (
