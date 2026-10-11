@@ -51,28 +51,23 @@ export default function GenderPrompt() {
   }, [needsGender])
 
   async function handleConfirm() {
-    if (!selected || !volunteerId) return
-    setSaving(true)
-    setError('')
+  if (!selected) return
+  setSaving(true)
+  setError('')
 
-    // .is('gender', null) means this can only ever set an empty value,
-    // and .select() lets us detect an update that matched no rows.
-    const { data, error: updateError } = await supabase
-      .from('volunteers')
-      .update({ gender: selected })
-      .eq('id', volunteerId)
-      .is('gender', null)
-      .select('id')
+  const { data, error: rpcError } = await supabase.rpc('set_my_gender', {
+    new_gender: selected,
+  })
 
-    if (updateError || !data || data.length === 0) {
-      setError('Something went wrong. Please try again.')
-      setSaving(false)
-      return
-    }
-
-    setNeedsGender(false)
+  if (rpcError || data !== true) {
+    setError('Something went wrong. Please try again.')
     setSaving(false)
+    return
   }
+
+  setNeedsGender(false)
+  setSaving(false)
+}
 
   if (!needsGender) return null
 
