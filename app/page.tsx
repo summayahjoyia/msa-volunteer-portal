@@ -13,7 +13,7 @@ export const revalidate = 0
 export default async function Home() {
   const { data: events, error } = await supabase
     .from('events')
-    .select('*, signups(id)')
+    .select('*, signups(id, gender, role_id)')
     .gte('event_date', new Date().toISOString())
     .order('event_date', { ascending: false })
 
@@ -26,7 +26,9 @@ export default async function Home() {
   const { data: roles, error: rolesError } = eventIds.length
     ? await supabase
         .from('event_roles')
-        .select('id, event_id, role_name, start_time, end_time, capacity, google_calendar_event_id, signups(id, volunteer_id)')
+        .select(
+          'id, event_id, role_name, start_time, end_time, capacity, brother_capacity, sister_capacity, google_calendar_event_id, signups(id, volunteer_id, gender)'
+        )
         .in('event_id', eventIds)
     : { data: [], error: null }
 
@@ -68,10 +70,16 @@ export default async function Home() {
             const spotsOpen = Math.max(event.v_capacity - signedUpCount, 0)
             const eventRoles = rolesByEvent.get(event.id) || []
             const hasRoles = eventRoles.length > 0
+
+            const isSplitEvent = event.brother_capacity != null || event.sister_capacity != null
+            const noRoleSignups = (event.signups || []).filter((s: any) => s.role_id === null)
+            const brotherTaken = noRoleSignups.filter((s: any) => s.gender === 'brother').length
+            const sisterTaken = noRoleSignups.filter((s: any) => s.gender === 'sister').length
+
             return (
               <li
                 key={event.id}
-                className="bg-white dark:bg-[#2A2A2D] rounded-xl p-4 shadow-sm border-t-4 border-msa-gold transition-colors"
+                className="relative bg-white dark:bg-[#2A2A2D] rounded-xl p-4 shadow-sm border-t-4 border-msa-gold transition-colors"
               >
                 <div className="flex justify-between items-start gap-3">
                   <h2 className="text-base font-semibold text-msa-green-dark dark:text-msa-cream">{event.name}</h2>
@@ -93,7 +101,7 @@ export default async function Home() {
                     <MapPin size={13} />
                     <span>{event.location || 'Location TBD'}</span>
                   </div>
-                  {!hasRoles && <p>Spots open: {spotsOpen} of {event.v_capacity}</p>}
+                  {!hasRoles && !isSplitEvent && <p>Spots open: {spotsOpen} of {event.v_capacity}</p>}
                 </div>
 
                 <div className="border-t border-gray-100 dark:border-gray-700 mt-2 pt-2 min-h-[100px]">
@@ -103,7 +111,6 @@ export default async function Home() {
                       eventName={event.name}
                       location={event.location}
                       groupChatLink={event.group_chat_link}
-              
                       roles={eventRoles}
                     />
                   ) : (
@@ -113,6 +120,10 @@ export default async function Home() {
                       eventDate={event.event_date}
                       location={event.location}
                       spotsOpen={spotsOpen}
+                      brotherCapacity={event.brother_capacity}
+                      sisterCapacity={event.sister_capacity}
+                      brotherTaken={brotherTaken}
+                      sisterTaken={sisterTaken}
                     />
                   )}
                 </div>

@@ -9,7 +9,7 @@ export const revalidate = 0
 export default async function AdminVolunteerSignup() {
   const { data: events, error } = await supabase
     .from('events')
-    .select('*, signups(id, volunteer_id, role_id)')
+    .select('*, signups(id, volunteer_id, role_id, gender)')
     .gte('event_date', new Date().toISOString())
     .order('event_date', { ascending: false })
 
@@ -22,7 +22,9 @@ export default async function AdminVolunteerSignup() {
   const { data: roles, error: rolesError } = eventIds.length
     ? await supabase
         .from('event_roles')
-        .select('id, event_id, role_name, start_time, end_time, capacity, google_calendar_event_id, signups(id, volunteer_id)')
+        .select(
+          'id, event_id, role_name, start_time, end_time, capacity, brother_capacity, sister_capacity, google_calendar_event_id, signups(id, volunteer_id, gender)'
+        )
         .in('event_id', eventIds)
     : { data: [], error: null }
 

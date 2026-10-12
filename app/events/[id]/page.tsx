@@ -3,7 +3,6 @@ import ProfilePill from '../../components/ProfilePill'
 import EventSignUpButton from '../../components/EventSignUpButton'
 import EventRoleSignUp from '../../components/EventRoleSignUp'
 import ThemeToggle from '../../components/ThemeToggle'
-import ShareEventButton from '../../components/ShareEventButton'
 import Link from 'next/link'
 import { formatEventDate, formatEventTime } from '@/lib/formatEventTime'
 import { Calendar, MapPin, ChevronLeft } from 'lucide-react'
@@ -20,7 +19,7 @@ export default async function EventPage({
 
   const { data: event, error } = await supabase
     .from('events')
-    .select('*, signups(id)')
+    .select('*, signups(id, gender, role_id)')
     .eq('id', id)
     .single()
 
@@ -39,7 +38,9 @@ export default async function EventPage({
 
   const { data: roles, error: rolesError } = await supabase
     .from('event_roles')
-    .select('id, event_id, role_name, start_time, end_time, capacity, google_calendar_event_id, signups(id, volunteer_id)')
+    .select(
+      'id, event_id, role_name, start_time, end_time, capacity, brother_capacity, sister_capacity, google_calendar_event_id, signups(id, volunteer_id, gender)'
+    )
     .eq('event_id', event.id)
 
   if (rolesError) {
@@ -49,6 +50,11 @@ export default async function EventPage({
   const signedUpCount = event.signups?.length || 0
   const spotsOpen = Math.max(event.v_capacity - signedUpCount, 0)
   const hasRoles = (roles || []).length > 0
+
+  const isSplitEvent = event.brother_capacity != null || event.sister_capacity != null
+  const noRoleSignups = (event.signups || []).filter((s: any) => s.role_id === null)
+  const brotherTaken = noRoleSignups.filter((s: any) => s.gender === 'brother').length
+  const sisterTaken = noRoleSignups.filter((s: any) => s.gender === 'sister').length
 
   return (
     <div className="min-h-screen bg-background transition-colors relative">
@@ -76,7 +82,7 @@ export default async function EventPage({
           </p>
         </div>
 
-        <div className="bg-white dark:bg-[#2A2A2D] rounded-xl p-4 shadow-sm border-t-4 border-msa-gold transition-colors">
+        <div className="relative bg-white dark:bg-[#2A2A2D] rounded-xl p-4 shadow-sm border-t-4 border-msa-gold transition-colors">
           <h1 className="text-base font-semibold text-msa-green-dark dark:text-msa-cream">{event.name}</h1>
           {event.description && (
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">{event.description}</p>
@@ -94,7 +100,7 @@ export default async function EventPage({
               <MapPin size={13} />
               <span>{event.location || 'Location TBD'}</span>
             </div>
-            {!hasRoles && <p>Spots open: {spotsOpen} of {event.v_capacity}</p>}
+            {!hasRoles && !isSplitEvent && <p>Spots open: {spotsOpen} of {event.v_capacity}</p>}
           </div>
 
           <div className="border-t border-gray-100 dark:border-gray-700 mt-2 pt-2 min-h-[100px]">
@@ -113,6 +119,10 @@ export default async function EventPage({
                 eventDate={event.event_date}
                 location={event.location}
                 spotsOpen={spotsOpen}
+                brotherCapacity={event.brother_capacity}
+                sisterCapacity={event.sister_capacity}
+                brotherTaken={brotherTaken}
+                sisterTaken={sisterTaken}
               />
             )}
           </div>

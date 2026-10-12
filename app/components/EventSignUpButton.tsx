@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useAuth } from './AuthProvider'
 import { useRouter } from 'next/navigation'
+import GroupCounts from './GroupCounts'
+
+type Gender = 'sister' | 'brother'
 
 type EventSignUpButtonProps = {
   eventId: number
@@ -11,6 +14,10 @@ type EventSignUpButtonProps = {
   eventDate: string
   location: string
   spotsOpen: number
+  brotherCapacity?: number | null
+  sisterCapacity?: number | null
+  brotherTaken?: number
+  sisterTaken?: number
 }
 
 export default function EventSignUpButton({
@@ -19,13 +26,22 @@ export default function EventSignUpButton({
   eventDate,
   location,
   spotsOpen,
+  brotherCapacity = null,
+  sisterCapacity = null,
+  brotherTaken = 0,
+  sisterTaken = 0,
 }: EventSignUpButtonProps) {
   const supabase = createClient()
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
 
   const [loading, setLoading] = useState(true)
-  const [volunteer, setVolunteer] = useState<{ id: number; name: string; email: string } | null>(null)
+  const [volunteer, setVolunteer] = useState<{
+    id: number
+    name: string
+    email: string
+    gender: Gender | null
+  } | null>(null)
   const [signupId, setSignupId] = useState<number | null>(null)
   const [status, setStatus] = useState<'idle' | 'submitting' | 'signed_up' | 'already' | 'cancelled' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
@@ -40,7 +56,7 @@ export default function EventSignUpButton({
 
       const { data: existing } = await supabase
         .from('volunteers')
-        .select('id, name, email')
+        .select('id, name, email, gender')
         .eq('email', user.email)
         .single()
 
@@ -122,6 +138,25 @@ export default function EventSignUpButton({
 
     setSignupId(inserted.id)
 
+    const { data: eventInfo } = await supabase
+      .from('events')
+      .select('group_chat_link')
+      .eq('id', eventId)
+      .single()
+
+    await fetch('/api/send-confirmation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: volunteer.email,
+        name: volunteer.name,
+        eventName,
+        eventDate,
+        location,
+        groupChatLink: eventInfo?.group_chat_link || null,
+      }),
+    })
+
     await syncCalendarAttendee('add', volunteer.email)
 
     setStatus('signed_up')
@@ -147,20 +182,51 @@ export default function EventSignUpButton({
     router.refresh()
   }
 
+  // Brothers/sisters split: spot counts per group, and the viewer's own group decides if they can sign up
+  const isSplit = brotherCapacity != null || sisterCapacity != null
+  const brothers = { cap: brotherCapacity ?? 0, taken: brotherTaken }
+  const sisters = { cap: sisterCapacity ?? 0, taken: sisterTaken }
+  const viewerGender = volunteer?.gender ?? null
+  const myGroup = viewerGender === 'brother' ? brothers : viewerGender === 'sister' ? sisters : null
+  const myOpen = myGroup ? Math.max(myGroup.cap - myGroup.taken, 0) : 0
+  // In a split event, a group that is closed or full (or an unknown group) just gets a disabled button
+  const blocked = isSplit && myOpen <= 0
+  const closedToViewer = isSplit && myGroup !== null && myGroup.cap === 0
+
+  const counts = isSplit ? (
+    <div className="mb-2">
+      <GroupCounts brothers={brothers} sisters={sisters} viewerGender={viewerGender} />
+    </div>
+  ) : null
+
+  // Dims the whole card (it sits over the card, which is position: relative)
+  const veil = closedToViewer ? (
+    <div className="absolute inset-0 rounded-xl bg-gray-200/60 dark:bg-black/40 pointer-events-none" />
+  ) : null
+
+  const signUpButtonClass =
+    'bg-msa-green text-white rounded-lg px-3 py-1.5 text-sm hover:bg-msa-green-dark transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-msa-green'
+
   if (authLoading || loading) return null
 
   if (!user || !volunteer) {
     if (spotsOpen <= 0) {
       return <p className="mt-3 text-sm text-gray-500 font-medium">This event is full.</p>
     }
-    return <p className="mt-3 text-sm text-gray-500">Sign in to sign up for this event.</p>
+    return (
+      <div className="mt-3">
+        {counts}
+        <p className="text-sm text-gray-500">Sign in to sign up for this event.</p>
+      </div>
+    )
   }
 
   if (status === 'signed_up' || status === 'already') {
     return (
       <div className="mt-2 text-sm">
+        {counts}
         <p className="text-msa-green-dark dark:text-msa-cream font-medium">
-          You're signed up for this event. Check your email for a calendar invite.
+          {status === 'already' ? "You're signed up for this event." : "You're signed up! Check your email for confirmation."}
         </p>
         {status === 'signed_up' && (
           <p className="text-msa-gold italic mt-1.5 text-[13px]">
@@ -178,32 +244,33 @@ export default function EventSignUpButton({
   }
 
   if (status === 'cancelled') {
-    if (spotsOpen <= 0) {
+    if (!isSplit && spotsOpen <= 0) {
       return <p className="mt-2 text-sm text-gray-500 font-medium">This event is now full.</p>
     }
     return (
       <div className="mt-2 text-sm">
+        {veil}
+        {counts}
         <p className="text-gray-500 dark:text-gray-400">You've cancelled your spot for this event.</p>
-        <button
-          onClick={handleSignUp}
-          className="mt-2 bg-msa-green text-white rounded-lg px-3 py-1.5 text-sm hover:bg-msa-green-dark transition"
-        >
+        <button onClick={handleSignUp} disabled={blocked} className={`mt-2 ${signUpButtonClass}`}>
           Sign Up Again
         </button>
       </div>
     )
   }
 
-  if (spotsOpen <= 0) {
+  if (!isSplit && spotsOpen <= 0) {
     return <p className="mt-3 text-sm text-gray-500 font-medium">This event is full.</p>
   }
 
   return (
     <div className="mt-3">
+      {veil}
+      {counts}
       <button
         onClick={handleSignUp}
-        disabled={status === 'submitting'}
-        className="bg-msa-green text-white rounded-lg px-3 py-1.5 text-sm hover:bg-msa-green-dark transition"
+        disabled={status === 'submitting' || blocked}
+        className={signUpButtonClass}
       >
         {status === 'submitting' ? '...' : 'Sign Up'}
       </button>

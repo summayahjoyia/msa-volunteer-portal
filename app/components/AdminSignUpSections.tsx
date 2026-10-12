@@ -14,8 +14,10 @@ type RoleRow = {
   start_time: string | null
   end_time: string | null
   capacity: number
+  brother_capacity: number | null
+  sister_capacity: number | null
   google_calendar_event_id: string | null
-  signups: { id: number; volunteer_id: number }[]
+  signups: { id: number; volunteer_id: number; gender: string | null }[]
 }
 
 type EventRow = {
@@ -26,9 +28,11 @@ type EventRow = {
   event_date: string
   event_end_date: string | null
   v_capacity: number
+  brother_capacity: number | null
+  sister_capacity: number | null
   google_calendar_event_id: string | null
   group_chat_link: string | null
-  signups: { id: number; volunteer_id: number; role_id: number | null }[]
+  signups: { id: number; volunteer_id: number; role_id: number | null; gender: string | null }[]
   event_roles: RoleRow[]
 }
 
@@ -145,15 +149,20 @@ export default function AdminSignUpSections({ events }: { events: EventRow[] }) 
         <ul className="space-y-4">
           {events.map((event) => {
             const hasRoles = event.event_roles && event.event_roles.length > 0
-            const signedUpCount = event.signups.filter(
+            const activeNoRole = event.signups.filter(
               (s) => !cancelledSignupIds.includes(s.id) && s.role_id === null
-            ).length
+            )
+            const signedUpCount = activeNoRole.length
             const spotsOpen = Math.max(event.v_capacity - signedUpCount, 0)
+
+            const isSplitEvent = event.brother_capacity != null || event.sister_capacity != null
+            const brotherTaken = activeNoRole.filter((s) => s.gender === 'brother').length
+            const sisterTaken = activeNoRole.filter((s) => s.gender === 'sister').length
 
             return (
               <li
                 key={event.id}
-                className="bg-white dark:bg-[#2A2A2D] rounded-xl p-4 shadow-sm border-t-4 border-msa-gold transition-colors"
+                className="relative bg-white dark:bg-[#2A2A2D] rounded-xl p-4 shadow-sm border-t-4 border-msa-gold transition-colors"
               >
                 <h3 className="text-base font-semibold text-msa-green-dark dark:text-msa-cream">{event.name}</h3>
                 {event.description && (
@@ -171,7 +180,7 @@ export default function AdminSignUpSections({ events }: { events: EventRow[] }) 
                     <MapPin size={13} />
                     <span>{event.location || 'Location TBD'}</span>
                   </div>
-                  {!hasRoles && <p>Spots open: {spotsOpen} of {event.v_capacity}</p>}
+                  {!hasRoles && !isSplitEvent && <p>Spots open: {spotsOpen} of {event.v_capacity}</p>}
                 </div>
                 <div className="border-t border-gray-100 dark:border-gray-700 mt-2 pt-2 min-h-[100px]">
                   {hasRoles ? (
@@ -189,6 +198,10 @@ export default function AdminSignUpSections({ events }: { events: EventRow[] }) 
                       eventDate={event.event_date}
                       location={event.location}
                       spotsOpen={spotsOpen}
+                      brotherCapacity={event.brother_capacity}
+                      sisterCapacity={event.sister_capacity}
+                      brotherTaken={brotherTaken}
+                      sisterTaken={sisterTaken}
                     />
                   )}
                 </div>
