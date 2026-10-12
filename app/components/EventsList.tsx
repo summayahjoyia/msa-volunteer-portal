@@ -11,6 +11,84 @@ import ShareEventButton from './ShareEventButton'
 
 type SortMode = 'date' | 'alpha'
 
+// Lists volunteers as "Sisters" then "Brothers", with names under each heading.
+// This applies to every event and role, including ones open to everyone.
+function renderSignups(signups: any[], caps: { brother: number | null; sister: number | null }) {
+  if (signups.length === 0 && caps.brother == null && caps.sister == null) {
+    return <p className="text-sm text-gray-400 mt-1">No sign-ups yet.</p>
+  }
+
+  const split = caps.brother != null || caps.sister != null
+  const sisterRows = signups.filter((s) => s.gender === 'sister')
+  const brotherRows = signups.filter((s) => s.gender === 'brother')
+  const unknownRows = signups.filter((s) => s.gender !== 'sister' && s.gender !== 'brother')
+  const known = sisterRows.length + brotherRows.length
+
+  const sisterCap = caps.sister ?? 0
+  const brotherCap = caps.brother ?? 0
+
+  // Split items only list a group that has spots (or people). Open-to-everyone items
+  // list both groups as soon as anyone has signed up.
+  const groups = [
+    {
+      key: 'sister',
+      label: 'Sisters',
+      cap: sisterCap,
+      rows: sisterRows,
+      show: split ? sisterCap > 0 || sisterRows.length > 0 : known > 0,
+    },
+    {
+      key: 'brother',
+      label: 'Brothers',
+      cap: brotherCap,
+      rows: brotherRows,
+      show: split ? brotherCap > 0 || brotherRows.length > 0 : known > 0,
+    },
+    {
+      key: 'unknown',
+      label: 'Gender not set',
+      cap: 0,
+      rows: unknownRows,
+      show: unknownRows.length > 0,
+    },
+  ].filter((g) => g.show)
+
+  if (groups.length === 0) {
+    return <p className="text-sm text-gray-400 mt-1">No sign-ups yet.</p>
+  }
+
+  return (
+    <div className="space-y-2 mt-1">
+      {groups.map((g) => (
+        <div key={g.key}>
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            {g.label} ({g.rows.length}
+            {split && g.key !== 'unknown' ? ` / ${g.cap}` : ''})
+          </p>
+          {g.rows.length > 0 ? (
+            <ul className="text-sm space-y-1 mt-1">
+              {g.rows.map((s: any) => (
+                <li
+                  key={s.id}
+                  className="flex justify-between items-center border-t border-gray-100 dark:border-gray-700 pt-1"
+                >
+                  <div>
+                    <div className="text-gray-900 dark:text-gray-100">{s.volunteers?.name}</div>
+                    <div className="text-xs text-gray-400">{s.volunteers?.email}</div>
+                  </div>
+                  <MarkAttendanceButton signupId={s.id} currentStatus={s.status} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-400 mt-1">None yet.</p>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function EventsList({ events }: { events: any[] }) {
   const [upcomingSort, setUpcomingSort] = useState<SortMode>('date')
   const [pastSort, setPastSort] = useState<SortMode>('date')
@@ -87,53 +165,28 @@ export default function EventsList({ events }: { events: any[] }) {
         </div>
 
         {hasRoles ? (
-          <div className="mt-3 space-y-3">
+          <div className="mt-3 space-y-4">
             {event.event_roles.map((role: any) => (
               <div key={role.id}>
                 <p className="text-sm font-medium text-msa-green dark:text-[#3B9A72]">
                   {role.role_name}: {role.signups?.length || 0} / {role.capacity}
                 </p>
-                {role.signups && role.signups.length > 0 ? (
-                  <ul className="text-sm space-y-1 mt-1">
-                    {role.signups.map((s: any) => (
-                      <li
-                        key={s.id}
-                        className="flex justify-between items-center border-t border-gray-100 dark:border-gray-700 pt-1"
-                      >
-                        <div>
-                          <div className="text-gray-900 dark:text-gray-100">{s.volunteers?.name}</div>
-                          <div className="text-xs text-gray-400">{s.volunteers?.email}</div>
-                        </div>
-                        <MarkAttendanceButton signupId={s.id} currentStatus={s.status} />
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-gray-400 mt-1">No sign-ups yet.</p>
-                )}
+                {renderSignups(role.signups || [], {
+                  brother: role.brother_capacity ?? null,
+                  sister: role.sister_capacity ?? null,
+                })}
               </div>
             ))}
           </div>
         ) : (
           <>
-            <p className="text-sm mt-2 mb-2 text-msa-green dark:text-[#3B9A72]">
+            <p className="text-sm mt-2 mb-1 text-msa-green dark:text-[#3B9A72]">
               Sign-ups: {event.signups?.length || 0} / {event.v_capacity}
             </p>
-            {event.signups && event.signups.length > 0 ? (
-              <ul className="text-sm space-y-1 mt-2">
-                {event.signups.map((s: any) => (
-                  <li key={s.id} className="flex justify-between items-center border-t border-gray-100 dark:border-gray-700 pt-1">
-                    <div>
-                      <div className="text-gray-900 dark:text-gray-100">{s.volunteers?.name}</div>
-                      <div className="text-xs text-gray-400">{s.volunteers?.email}</div>
-                    </div>
-                    <MarkAttendanceButton signupId={s.id} currentStatus={s.status} />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-gray-400">No sign-ups yet.</p>
-            )}
+            {renderSignups(event.signups || [], {
+              brother: event.brother_capacity ?? null,
+              sister: event.sister_capacity ?? null,
+            })}
           </>
         )}
 

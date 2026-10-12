@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 export default async function AdminDashboard() {
   const { data: events, error: eventsError } = await supabase
     .from('events')
-    .select('*, signups(id, status, role_id, volunteers(name, email))')
+    .select('*, signups(id, status, role_id, gender, volunteers(name, email))')
     .order('event_date', { ascending: true })
 
   if (eventsError) {
@@ -20,7 +20,7 @@ export default async function AdminDashboard() {
   const { data: roles, error: rolesError } = eventIds.length
     ? await supabase
         .from('event_roles')
-        .select('id, event_id, role_name, start_time, end_time, capacity')
+        .select('id, event_id, role_name, start_time, end_time, capacity, brother_capacity, sister_capacity')
         .in('event_id', eventIds)
     : { data: [], error: null }
 
@@ -49,12 +49,13 @@ export default async function AdminDashboard() {
   const csvRows = eventsWithRoles.flatMap((event) =>
     (event.signups?.length
       ? event.signups
-      : [{ volunteers: null, status: 'no sign-ups', role_name: null }]
+      : [{ volunteers: null, status: 'no sign-ups', role_name: null, gender: null }]
     ).map((s: any) => ({
       event: event.name,
       date: new Date(event.event_date).toLocaleString(),
       location: event.location,
       role: s.role_name || '',
+      gender: s.gender || '',
       volunteer_name: s.volunteers?.name || '',
       volunteer_email: s.volunteers?.email || '',
       status: s.status,
