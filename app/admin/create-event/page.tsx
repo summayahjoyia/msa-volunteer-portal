@@ -12,12 +12,20 @@ import { Plus, X } from 'lucide-react'
 
 type RecurrenceType = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'annually' | 'custom'
 
-type RoleInput = {
+type Audience = 'everyone' | 'both' | 'brothers' | 'sisters'
+
+type AudienceValues = {
+  audience: Audience
+  capacity: number
+  brotherCapacity: number
+  sisterCapacity: number
+}
+
+type RoleInput = AudienceValues & {
   id: string
   name: string
   startTime: string
   endTime: string
-  capacity: number
 }
 
 const PRESET_LOCATIONS = [
@@ -29,8 +37,111 @@ const PRESET_LOCATIONS = [
   'Other (custom)',
 ]
 
-const inputClass =
-  'h-9 border rounded px-2 bg-white dark:bg-[#2A2A2D] dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500 min-w-0'
+const baseInput =
+  'border rounded px-2 bg-white dark:bg-[#2A2A2D] dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500 min-w-0'
+// Single-line inputs and selects get a fixed height so they all line up
+const inputClass = `${baseInput} h-9`
+// Textareas size from their rows instead
+const textareaClass = `${baseInput} py-1.5`
+
+// Turns the form's audience choice into the values we store.
+// total goes in the old single-capacity column so older displays stay sensible.
+function toCapacities(a: AudienceValues): { total: number; brother: number | null; sister: number | null } {
+  switch (a.audience) {
+    case 'both':
+      return { total: a.brotherCapacity + a.sisterCapacity, brother: a.brotherCapacity, sister: a.sisterCapacity }
+    case 'brothers':
+      return { total: a.capacity, brother: a.capacity, sister: 0 }
+    case 'sisters':
+      return { total: a.capacity, brother: 0, sister: a.capacity }
+    default:
+      return { total: a.capacity, brother: null, sister: null }
+  }
+}
+
+function validateCapacity(label: string, a: AudienceValues): string | null {
+  if (a.audience === 'both') {
+    if (a.brotherCapacity < 0 || a.sisterCapacity < 0) return `${label}: spots can't be negative.`
+    if (a.brotherCapacity + a.sisterCapacity < 1) return `${label} needs at least 1 spot.`
+  } else if (!a.capacity || a.capacity < 1) {
+    return `${label} needs at least 1 spot.`
+  }
+  return null
+}
+
+function AudienceFields({
+  values,
+  onChange,
+  singleLabel,
+  labelClass,
+}: {
+  values: AudienceValues
+  onChange: (patch: Partial<AudienceValues>) => void
+  singleLabel: string
+  labelClass: string
+}) {
+  const singleText =
+    values.audience === 'brothers'
+      ? 'Brothers needed'
+      : values.audience === 'sisters'
+      ? 'Sisters needed'
+      : singleLabel
+
+  return (
+    <div className="flex flex-col gap-2 min-w-0">
+      <div className="min-w-0">
+        <label className={labelClass}>Who can sign up</label>
+        <select
+          value={values.audience}
+          onChange={(e) => onChange({ audience: e.target.value as Audience })}
+          className={`${inputClass} w-full`}
+        >
+          <option value="everyone">Anyone (one shared limit)</option>
+          <option value="both">Brothers and sisters (separate limits)</option>
+          <option value="brothers">Brothers only</option>
+          <option value="sisters">Sisters only</option>
+        </select>
+      </div>
+
+      {values.audience === 'both' ? (
+        <div className="flex gap-2 min-w-0">
+          <div className="flex-1 min-w-0">
+            <label className={labelClass}>Brothers needed</label>
+            <input
+              type="number"
+              min={0}
+              value={values.brotherCapacity}
+              onChange={(e) => onChange({ brotherCapacity: Number(e.target.value) })}
+              className={`${inputClass} w-full`}
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <label className={labelClass}>Sisters needed</label>
+            <input
+              type="number"
+              min={0}
+              value={values.sisterCapacity}
+              onChange={(e) => onChange({ sisterCapacity: Number(e.target.value) })}
+              className={`${inputClass} w-full`}
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="min-w-0 sm:max-w-[10rem]">
+          <label className={labelClass}>{singleText}</label>
+          <input
+            type="number"
+            min={1}
+            value={values.capacity}
+            onChange={(e) => onChange({ capacity: Number(e.target.value) })}
+            className={`${inputClass} w-full`}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function CreateEvent() {
   const [name, setName] = useState('')
   const [task, setTask] = useState('')
@@ -42,7 +153,12 @@ export default function CreateEvent() {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
   const [time, setTime] = useState('14:00')
   const [endTime, setEndTime] = useState('')
-  const [capacity, setCapacity] = useState(5)
+  const [main, setMain] = useState<AudienceValues>({
+    audience: 'everyone',
+    capacity: 5,
+    brotherCapacity: 3,
+    sisterCapacity: 3,
+  })
   const [recurrence, setRecurrence] = useState<RecurrenceType>('none')
   const [occurrences, setOccurrences] = useState(4)
   const [customInterval, setCustomInterval] = useState(3)
@@ -86,12 +202,21 @@ export default function CreateEvent() {
   function addRole() {
     setRoles((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), name: '', startTime: '', endTime: '', capacity: 1 },
+      {
+        id: crypto.randomUUID(),
+        name: '',
+        startTime: '',
+        endTime: '',
+        audience: 'everyone',
+        capacity: 1,
+        brotherCapacity: 1,
+        sisterCapacity: 1,
+      },
     ])
   }
 
-  function updateRole(id: string, field: keyof RoleInput, value: string | number) {
-    setRoles((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)))
+  function updateRole(id: string, patch: Partial<RoleInput>) {
+    setRoles((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)))
   }
 
   function removeRole(id: string) {
@@ -123,21 +248,41 @@ export default function CreateEvent() {
       }
     }
 
+    if (roles.length === 0) {
+      const capacityError = validateCapacity('This event', main)
+      if (capacityError) {
+        setStatus('error')
+        setErrorMessage(capacityError)
+        return
+      }
+    }
+
     for (const role of roles) {
       if (!role.name.trim()) {
         setStatus('error')
         setErrorMessage('Every role needs a name.')
         return
       }
-      if (!role.capacity || role.capacity < 1) {
+      const capacityError = validateCapacity(`"${role.name}"`, role)
+      if (capacityError) {
         setStatus('error')
-        setErrorMessage(`"${role.name}" needs a capacity of at least 1.`)
+        setErrorMessage(capacityError)
         return
       }
     }
 
     setStatus('submitting')
     setErrorMessage('')
+
+    // With roles, capacity lives on each role, so the event just stores the combined total.
+    const eventCaps =
+      roles.length > 0
+        ? {
+            total: roles.reduce((sum, r) => sum + toCapacities(r).total, 0),
+            brother: null as number | null,
+            sister: null as number | null,
+          }
+        : toCapacities(main)
 
     const seriesId = recurrence !== 'none' ? crypto.randomUUID() : null
 
@@ -159,7 +304,9 @@ export default function CreateEvent() {
         location,
         event_date: eventDateTime.toISOString(),
         event_end_date: eventEndDateTime,
-        v_capacity: capacity,
+        v_capacity: eventCaps.total,
+        brother_capacity: eventCaps.brother,
+        sister_capacity: eventCaps.sister,
         is_recurring: recurrence !== 'none',
         series_id: seriesId,
         group_chat_link: groupChatLink || null,
@@ -203,12 +350,16 @@ export default function CreateEvent() {
             roleEnd = ev.event_end_date
           }
 
+          const caps = toCapacities(role)
+
           return {
             event_id: ev.id,
             role_name: role.name,
             start_time: roleStart,
             end_time: roleEnd,
-            capacity: role.capacity,
+            capacity: caps.total,
+            brother_capacity: caps.brother,
+            sister_capacity: caps.sister,
           }
         })
 
@@ -309,7 +460,7 @@ export default function CreateEvent() {
                 value={task}
                 onChange={(e) => setTask(e.target.value)}
                 required
-                className={`${inputClass} w-full text-sm`}
+                className={`${textareaClass} w-full text-sm`}
                 rows={2}
               />
             </div>
@@ -328,7 +479,7 @@ export default function CreateEvent() {
                 placeholder="e.g. Please arrive 15 minutes early"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className={`${inputClass} w-full text-sm`}
+                className={`${textareaClass} w-full text-sm`}
                 rows={2}
               />
             </div>
@@ -361,7 +512,7 @@ export default function CreateEvent() {
 
           <div className="min-w-0">
             <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">
-              Group chat link (optional: sent to volunteers who sign up)
+              Group chat link (optional — only sent to volunteers who sign up, never shown publicly)
             </label>
             <input
               placeholder="e.g. WhatsApp group invite link"
@@ -420,16 +571,18 @@ export default function CreateEvent() {
           </div>
 
           <div className="min-w-0">
-            <label className="text-sm block mb-1 text-gray-700 dark:text-gray-300">
-              Volunteers needed {roles.length > 0 && '(only used if no roles are added below)'}
-            </label>
-            <input
-              type="number"
-              value={capacity}
-              onChange={(e) => setCapacity(Number(e.target.value))}
-              required
-              className={`${inputClass} w-full`}
-            />
+            {roles.length === 0 ? (
+              <AudienceFields
+                values={main}
+                onChange={(patch) => setMain((prev) => ({ ...prev, ...patch }))}
+                singleLabel="Volunteers needed"
+                labelClass="text-sm block mb-1 text-gray-700 dark:text-gray-300"
+              />
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Volunteer limits are set per role below.
+              </p>
+            )}
           </div>
 
           <div className="border-t border-gray-100 dark:border-gray-700 pt-4 min-w-0">
@@ -458,7 +611,7 @@ export default function CreateEvent() {
                       <input
                         placeholder="Role name (e.g. Set-up)"
                         value={role.name}
-                        onChange={(e) => updateRole(role.id, 'name', e.target.value)}
+                        onChange={(e) => updateRole(role.id, { name: e.target.value })}
                         className={`${inputClass} flex-1 min-w-0`}
                       />
                       <button
@@ -473,39 +626,33 @@ export default function CreateEvent() {
                     <div className="flex flex-col sm:flex-row gap-2 min-w-0">
                       <div className="flex-1 min-w-0">
                         <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">
-                          Start time (default: event start)
+                          Start time (optional, defaults to event start)
                         </label>
                         <input
                           type="time"
                           value={role.startTime}
-                          onChange={(e) => updateRole(role.id, 'startTime', e.target.value)}
+                          onChange={(e) => updateRole(role.id, { startTime: e.target.value })}
                           className={`${inputClass} w-full`}
                         />
                       </div>
                       <div className="flex-1 min-w-0">
                         <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">
-                          End time (default: event end)
+                          End time (optional, defaults to event end)
                         </label>
                         <input
                           type="time"
                           value={role.endTime}
-                          onChange={(e) => updateRole(role.id, 'endTime', e.target.value)}
-                          className={`${inputClass} w-full`}
-                        />
-                      </div>
-                      <div className="w-full sm:w-24 min-w-0">
-                        <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">
-                          Capacity
-                        </label>
-                        <input
-                          type="number"
-                          value={role.capacity}
-                          onChange={(e) => updateRole(role.id, 'capacity', Number(e.target.value))}
-                          min={1}
+                          onChange={(e) => updateRole(role.id, { endTime: e.target.value })}
                           className={`${inputClass} w-full`}
                         />
                       </div>
                     </div>
+                    <AudienceFields
+                      values={role}
+                      onChange={(patch) => updateRole(role.id, patch)}
+                      singleLabel="Capacity"
+                      labelClass="text-xs text-gray-600 dark:text-gray-400 block mb-1"
+                    />
                   </div>
                 ))}
               </div>
@@ -521,8 +668,8 @@ export default function CreateEvent() {
             >
               <option value="none">Doesn't repeat</option>
               <option value="daily">Daily</option>
-              <option value="biweekly">Biweekly</option>
               <option value="weekly">Weekly</option>
+              <option value="biweekly">Biweekly</option>
               <option value="monthly">Monthly</option>
               <option value="annually">Annually</option>
               <option value="custom">Custom</option>
